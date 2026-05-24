@@ -1,0 +1,1711 @@
+<!--
+=====================================================
+© 2026 SamG° & Rowan Thistlebrooke — All Rights Reserved
+
+Personal & Educational Use Only.
+You may view and run this code locally for learning.
+You may NOT use this code or data in a commercial
+product, redistribute it, or republish it as your own.
+
+Unauthorized use may be subject to copyright enforcement.
+=====================================================
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Health</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{background:var(--body-bg,#050506);color:var(--text-primary,#FAFAFA);font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif;transition:background 6s ease,color 6s ease;}
+
+/* ── Health page header ── */
+.h-page-header{max-width:700px;margin:0 auto;padding:20px 16px 0}
+
+/* ── Panels ── */
+.h-panel{display:none;padding:20px 16px 60px;max-width:700px;margin:0 auto}
+.h-panel.active{display:block}
+#panelWorkouts{padding:0;max-width:none}
+#panelWorkouts iframe{width:100%;height:calc(100vh - 120px);border:none;display:block}
+
+/* ── Section title ── */
+.sec-title{
+  font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--text-tertiary);display:flex;align-items:center;gap:10px;margin:22px 0 12px;
+}
+.sec-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(255,255,255,.08),transparent)}
+
+/* ── Card ── */
+.h-card{
+  background:var(--card-bg,rgba(255,255,255,.04));
+  border:1px solid var(--card-border,rgba(255,255,255,.06));
+  border-radius:16px;padding:18px 20px;margin-bottom:14px;
+  backdrop-filter:blur(20px);transition:background 4s ease,border-color 4s ease;
+}
+
+/* ── Water tracker (General) ── */
+.water-goal-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap}
+.water-goal-label{font-size:13px;color:var(--text-secondary)}
+.water-goal-input{width:80px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:8px 10px;color:var(--text-primary);font-size:13px;font-family:ui-monospace,monospace;outline:none}
+.water-goal-input:focus{border-color:rgba(255,255,255,.3)}
+.water-counter{display:flex;flex-direction:column;align-items:center;gap:12px;padding:8px 0}
+.water-arc-wrap{position:relative;width:120px;height:120px}
+.water-arc-wrap svg{width:100%;height:100%}
+.water-arc-lbl{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.water-count-big{font-size:28px;font-weight:800;font-family:ui-monospace,monospace;color:var(--text-primary);line-height:1}
+.water-count-sub{font-size:10px;color:var(--text-tertiary);font-weight:700;letter-spacing:.08em}
+.water-btns{display:flex;gap:10px;align-items:center}
+.water-btn{width:44px;height:44px;border-radius:50%;border:none;font-size:20px;cursor:pointer;
+  background:var(--card-bg,rgba(255,255,255,.06));color:var(--text-primary);
+  display:flex;align-items:center;justify-content:center;transition:background .15s,transform .12s}
+.water-btn:hover{background:var(--card-bg-hover,rgba(255,255,255,.10))}
+.water-btn:active{transform:scale(.9)}
+.water-add{background:rgba(125,211,252,.15)!important;color:#7DD3FC!important}
+.water-reset{font-size:14px;background:none!important;border:1px solid rgba(255,255,255,.1)!important;color:var(--text-tertiary)!important;width:36px!important;height:36px!important;border-radius:10px!important}
+
+/* ── Stats row ── */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:4px}
+.stat-box{background:var(--card-bg,rgba(255,255,255,.03));border:1px solid var(--card-border);border-radius:12px;padding:14px 10px;text-align:center;transition:background 4s ease}
+.stat-lbl{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:5px}
+.stat-val{font-size:20px;font-weight:800;font-family:ui-monospace,monospace;color:var(--text-primary)}
+.stat-val.good{color:#6BE3A4}
+.stat-val.warn{color:#F2C063}
+
+/* ── Sleep log ── */
+.sleep-form{display:flex;flex-direction:column;gap:10px;margin-bottom:4px}
+.sleep-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sleep-label{font-size:13px;color:var(--text-secondary);min-width:80px;flex-shrink:0}
+.h-input{
+  flex:1;min-width:90px;background:var(--card-bg,rgba(255,255,255,.04));
+  border:1px solid var(--card-border,rgba(255,255,255,.08));
+  border-radius:11px;padding:9px 12px;color:var(--text-primary);font-size:13px;
+  font-family:inherit;outline:none;transition:border-color .2s;
+}
+.h-input:focus{border-color:rgba(255,255,255,.3)}
+.h-input[type=time]{width:130px;flex:none;font-family:ui-monospace,monospace}
+.h-input[type=number]{width:70px;flex:none;font-family:ui-monospace,monospace}
+.h-select{
+  flex:1;background:var(--card-bg,rgba(255,255,255,.04));border:1px solid var(--card-border,rgba(255,255,255,.08));
+  border-radius:11px;padding:9px 12px;color:var(--text-primary);font-size:13px;
+  font-family:inherit;outline:none;appearance:none;-webkit-appearance:none;
+}
+.h-select option{background:#111;color:#FAFAFA}
+.h-btn{
+  background:linear-gradient(180deg,#FFF 0%,#E8E5DD 100%);color:#0A0A0B;border:none;
+  border-radius:11px;padding:9px 18px;font-weight:700;font-size:13px;cursor:pointer;flex-shrink:0;
+  font-family:inherit;box-shadow:0 1px 0 rgba(255,255,255,.5) inset;transition:transform .12s;
+}
+.h-btn:hover{transform:translateY(-1px)}
+.sleep-log-list{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.sleep-log-item{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  background:var(--card-bg,rgba(255,255,255,.035));border:1px solid var(--card-border);
+  border-radius:12px;transition:background .2s;
+}
+.sleep-log-item:hover{background:var(--card-bg-hover)}
+.sleep-log-item:hover .item-del{opacity:1}
+.sleep-date{font-family:ui-monospace,monospace;font-size:11px;color:var(--text-tertiary);flex-shrink:0;min-width:60px}
+.sleep-duration{font-size:14px;font-weight:700;color:var(--text-primary);font-family:ui-monospace,monospace}
+.sleep-times{font-size:11px;color:var(--text-secondary);flex:1}
+.sleep-quality{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.08);color:var(--text-secondary)}
+.item-del{background:none;border:none;color:var(--text-tertiary);opacity:.3;cursor:pointer;font-size:15px;padding:4px;border-radius:6px;transition:all .15s;flex-shrink:0}
+.item-del:hover{color:#F87171;opacity:1}
+
+/* ── Food log ── */
+.food-form{display:flex;flex-direction:column;gap:10px;margin-bottom:4px}
+.food-log-list{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.food-log-item{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  background:var(--card-bg,rgba(255,255,255,.035));border:1px solid var(--card-border);
+  border-radius:12px;transition:background .2s;
+}
+.food-log-item:hover{background:var(--card-bg-hover)}
+.food-log-item:hover .item-del{opacity:1}
+.food-name{flex:1;font-size:13px;color:var(--text-primary)}
+.food-cal{font-family:ui-monospace,monospace;font-size:12px;font-weight:700;color:#F2C063;flex-shrink:0}
+.food-meal-tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(255,255,255,.08);color:var(--text-tertiary);flex-shrink:0;text-transform:uppercase;letter-spacing:.08em}
+.calorie-total{display:flex;justify-content:space-between;align-items:center;padding:12px 0 0;border-top:1px solid rgba(255,255,255,.06);margin-top:4px}
+.calorie-total-lbl{font-size:12px;color:var(--text-tertiary)}
+.calorie-total-val{font-family:ui-monospace,monospace;font-size:18px;font-weight:800;color:#F2C063}
+
+/* ── Health Goals (shared with Goals tab) ── */
+.hg-date{font-size:12px;color:var(--text-tertiary);margin-bottom:12px}
+.goal-item{
+  display:flex;align-items:center;gap:10px;padding:11px 14px;margin-bottom:6px;
+  background:var(--card-bg,rgba(255,255,255,.035));border:1px solid var(--card-border);
+  border-radius:12px;cursor:pointer;transition:background .2s;
+}
+.goal-item:hover{background:var(--card-bg-hover)}
+.goal-cb{width:18px;height:18px;border-radius:6px;border:2px solid var(--card-border);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.goal-cb.done{background:#6BE3A4;border-color:#6BE3A4}
+.goal-cb.done::after{content:'✓';font-size:11px;font-weight:900;color:#050506}
+.goal-text{flex:1;font-size:13px;color:var(--text-primary);transition:color .2s}
+.goal-item.done .goal-text{color:var(--text-tertiary);text-decoration:line-through}
+.goal-cat{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-tertiary);flex-shrink:0}
+.hg-add-row{display:flex;gap:8px;margin-top:8px}
+.hg-empty{font-size:13px;color:var(--text-tertiary);font-style:italic;text-align:center;padding:20px 0}
+
+/* ── Weight graph ── */
+.weight-graph-wrap{width:100%;height:180px;position:relative}
+.weight-graph-wrap svg{width:100%;height:100%}
+.weight-entry-row{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.weight-history{display:flex;flex-direction:column;gap:4px;max-height:180px;overflow-y:auto;margin-top:8px}
+.weight-log-item{display:flex;align-items:center;gap:8px;padding:7px 12px;background:var(--card-bg,rgba(255,255,255,.03));border:1px solid var(--card-border);border-radius:10px}
+.weight-log-date{font-family:ui-monospace,monospace;font-size:10px;color:var(--text-tertiary);min-width:55px}
+.weight-log-val{font-family:ui-monospace,monospace;font-size:14px;font-weight:800;color:var(--text-primary);flex:1}
+.weight-log-change{font-family:ui-monospace,monospace;font-size:10px;font-weight:700}
+.weight-log-change.up{color:#F87171}
+.weight-log-change.down{color:#6BE3A4}
+
+/* ── Macro dashboard ── */
+.macro-ring-row{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.macro-ring-wrap{position:relative;width:110px;height:110px;flex-shrink:0}
+.macro-ring-wrap svg{width:100%;height:100%}
+.macro-ring-lbl{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+.macro-cal-big{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;color:var(--text-primary);line-height:1}
+.macro-cal-sub{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-tertiary)}
+.macro-bars{flex:1;min-width:140px;display:flex;flex-direction:column;gap:8px}
+.macro-bar-row{display:flex;flex-direction:column;gap:3px}
+.macro-bar-header{display:flex;justify-content:space-between;align-items:center}
+.macro-bar-name{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-tertiary)}
+.macro-bar-val{font-family:ui-monospace,monospace;font-size:10px;font-weight:700;color:var(--text-secondary)}
+.macro-bar-track{height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden}
+.macro-bar-fill{height:100%;border-radius:3px;transition:width .5s cubic-bezier(.22,1,.36,1)}
+.macro-form{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.macro-form-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.macro-history{display:flex;flex-direction:column;gap:4px;max-height:180px;overflow-y:auto;margin-top:8px}
+.macro-log-item{display:flex;align-items:center;gap:8px;padding:7px 12px;background:var(--card-bg,rgba(255,255,255,.03));border:1px solid var(--card-border);border-radius:10px;flex-wrap:wrap}
+.macro-log-name{flex:1;font-size:12px;color:var(--text-primary);min-width:80px}
+.macro-pips{display:flex;gap:6px;flex-wrap:wrap}
+.macro-pip{font-family:ui-monospace,monospace;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(255,255,255,.06);color:var(--text-tertiary)}
+
+/* ── General widget grid (customizable) ── */
+.gen-widget-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.gen-widget-grid .h-card{margin-bottom:0;position:relative}
+
+/* ── Health overview widget customization ── */
+.h-customize-bar{
+  display:flex;align-items:center;gap:10px;padding:10px 16px;max-width:700px;margin:0 auto 12px;
+  background:var(--card-bg,rgba(255,255,255,.04));border:1px solid var(--card-border,rgba(255,255,255,.06));
+  border-radius:14px;flex-wrap:wrap;
+}
+.h-cust-btn{
+  background:none;border:1.5px solid rgba(255,255,255,.15);border-radius:10px;
+  padding:6px 14px;font-size:12px;font-weight:700;color:var(--text-secondary);cursor:pointer;
+  font-family:inherit;transition:all .15s;
+}
+.h-cust-btn:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3);color:var(--text-primary)}
+.h-cust-btn.h-cust-done{background:rgba(107,227,164,.12);border-color:rgba(107,227,164,.35);color:#6BE3A4}
+.h-card.hw-customize-mode{cursor:grab;border-color:rgba(255,255,255,.18)!important}
+.h-card.hw-customize-mode:active{cursor:grabbing}
+.h-card.hw-drag-over{border-color:rgba(125,211,252,.5)!important;background:rgba(125,211,252,.06)!important}
+.h-card.hw-hidden{display:none}
+.hw-controls{
+  position:absolute;top:12px;right:12px;display:none;gap:5px;flex-direction:row;align-items:center;
+}
+.hw-customize-mode .hw-controls{display:flex}
+.hw-ctrl-btn{
+  background:rgba(20,20,26,.7);border:1px solid rgba(255,255,255,.15);border-radius:7px;
+  padding:3px 8px;font-size:10px;font-weight:700;color:var(--text-secondary);cursor:pointer;
+  font-family:inherit;transition:all .12s;backdrop-filter:blur(8px);white-space:nowrap;
+}
+.hw-ctrl-btn:hover{background:rgba(40,40,50,.9);color:var(--text-primary)}
+.hw-ctrl-btn.hw-del{color:#F87171;border-color:rgba(248,113,113,.25)}
+.hw-ctrl-btn.hw-del:hover{background:rgba(248,113,113,.15)}
+
+/* ── Empty state ── */
+.empty-state{font-size:13px;color:var(--text-tertiary);font-style:italic;text-align:center;padding:20px 0}
+
+/* ── AI Summary ── */
+.page-ai-summary{margin-bottom:18px;border-radius:18px;padding:16px 20px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);position:relative;overflow:hidden}
+.page-ai-summary::before{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,rgba(var(--ai-grad-rgb-1,107,227,164),.06),rgba(var(--ai-grad-rgb-2,125,211,252),.03));pointer-events:none}
+.page-ai-title{font-size:9.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px;background:linear-gradient(90deg,var(--ai-grad-1,#6BE3A4),var(--ai-grad-2,#7DD3FC));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.page-ai-text{font-size:13px;line-height:1.6;color:var(--text-secondary)}
+.page-ai-text .ai-hl{background:linear-gradient(90deg,var(--ai-grad-1,#6BE3A4),var(--ai-grad-2,#7DD3FC));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-weight:700}
+
+@media(max-width:768px){
+  /* Bottom tray (topbar.js) handles navigation — hide the in-page duplicate */
+  .ctx-subtabs{display:none!important}
+  .h-page-header{padding:14px 12px 0}
+  .h-panel{padding:16px 12px 100px}
+}
+@media(max-width:600px){
+  .stats-row{grid-template-columns:repeat(3,1fr);gap:8px}
+  .stat-box{padding:12px 6px}
+  .stat-lbl{font-size:8px;letter-spacing:.10em}
+  .stat-val{font-size:15px}
+  .macro-ring-row{justify-content:center}
+  .gen-widget-grid{grid-template-columns:1fr!important}
+  .gen-widget-grid .h-card{grid-column:span 1!important}
+  .h-card{padding:16px 14px}
+  .hw-metric-val{font-size:26px}
+  .sec-title{margin:16px 0 10px}
+}
+@media(max-width:400px){
+  .stat-val{font-size:14px}
+  .stats-row{gap:6px}
+}
+
+/* ── HC metric widgets ── */
+.hw-metric-header{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:10px}
+.hw-metric-val{font-size:32px;font-weight:800;font-family:ui-monospace,monospace;color:var(--text-primary);line-height:1}
+.hw-metric-unit{font-size:14px;font-weight:600;opacity:.5;margin-left:2px}
+.hw-metric-sub{font-size:11px;color:var(--text-tertiary);margin-top:4px}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js" defer></script>
+</head>
+<body>
+
+<!-- Page header + contextual subtabs -->
+<div class="h-page-header">
+  <h1 class="dash-title">Health</h1>
+  <nav class="ctx-subtabs" id="hSubnav">
+    <button class="ctx-stab active" data-panel="overview"><img class="ui-icon" src="themes/icons/icons8-arm-muscle-60.png" alt="" style="width:14px;height:14px"> Overview</button>
+    <button class="ctx-stab" data-panel="workouts"><img class="ui-icon" src="themes/icons/icons8-workout-24.png" alt="" style="width:14px;height:14px"> Workouts</button>
+    <button class="ctx-stab" data-panel="sleep"><img class="ui-icon" src="themes/icons/icons8-sleep-64.png" alt="" style="width:14px;height:14px"> Sleep</button>
+    <button class="ctx-stab" data-panel="food"><img class="ui-icon" src="themes/icons/icons8-organic-food-50.png" alt="" style="width:14px;height:14px"> Food</button>
+    <button class="ctx-stab" data-panel="goals"><img class="ui-icon" src="themes/icons/icons8-sparkle-50.png" alt="" style="width:14px;height:14px"> Goals</button>
+  </nav>
+</div>
+
+<!-- Overview — Health Dashboard -->
+<div class="h-panel active" id="panelOverview">
+
+  <!-- AI Summary -->
+  <div class="page-ai-summary" id="healthAiSummary" style="display:none">
+    <div class="page-ai-title">Health Overview</div>
+    <div class="page-ai-text" id="healthAiText">Analyzing your health data…</div>
+  </div>
+
+  <!-- Today at a Glance -->
+  <div class="sec-title">Today at a Glance</div>
+  <div class="stats-row" style="margin-bottom:16px">
+    <div class="stat-box">
+      <div class="stat-lbl">Weight</div>
+      <div class="stat-val" id="glanceWeight">—</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-lbl">Sleep</div>
+      <div class="stat-val" id="glanceSleep">—</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-lbl">Calories</div>
+      <div class="stat-val" id="glanceCal">—</div>
+    </div>
+  </div>
+  <div class="stats-row" style="margin-bottom:16px">
+    <div class="stat-box">
+      <div class="stat-lbl">Heart Rate</div>
+      <div class="stat-val" id="glanceHR">—</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-lbl">Steps</div>
+      <div class="stat-val" id="glanceSteps">—</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-lbl">SpO₂</div>
+      <div class="stat-val" id="glanceSPO2">—</div>
+    </div>
+  </div>
+
+  <!-- Overview customize bar -->
+  <div class="h-customize-bar" id="hCustomizeBar" style="display:none">
+    <span style="font-size:11px;font-weight:700;color:var(--text-tertiary);letter-spacing:.1em;text-transform:uppercase;flex:1">Customize Layout</span>
+    <button class="h-cust-btn" id="hAddWidgetBtn">+ Add Widget</button>
+    <button class="h-cust-btn h-cust-done" id="hDoneCustomizeBtn">Done</button>
+  </div>
+
+  <div class="gen-widget-grid" id="hWidgetGrid">
+
+    <!-- Water card -->
+    <div class="h-card" id="hw-water" draggable="false" data-hwid="water">
+      <div class="hw-controls">
+        <button class="hw-ctrl-btn" onclick="hToggleWide('hw-water')">Wide</button>
+        <button class="hw-ctrl-btn hw-del" onclick="hHideWidget('hw-water')">Hide</button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <span style="font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--text-tertiary)">Water Intake</span>
+        <input type="number" class="water-goal-input" id="waterGoalInput" min="1" max="30" value="8" title="Daily goal">
+      </div>
+      <div class="water-counter">
+        <div class="water-arc-wrap">
+          <svg viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(125,211,252,.1)" stroke-width="10"/>
+            <circle id="waterArc" cx="60" cy="60" r="50" fill="none" stroke="#7DD3FC" stroke-width="10"
+              stroke-linecap="round" transform="rotate(-90 60 60)"
+              stroke-dasharray="314.16" stroke-dashoffset="314.16"
+              style="transition:stroke-dashoffset .7s cubic-bezier(.22,1,.36,1)"/>
+          </svg>
+          <div class="water-arc-lbl">
+            <span class="water-count-big" id="waterCount">0</span>
+            <span class="water-count-sub" id="waterCountSub">/ 8</span>
+          </div>
+        </div>
+        <div class="water-btns">
+          <button class="water-btn water-reset" id="waterReset" title="Reset">↺</button>
+          <button class="water-btn water-add" id="waterAdd">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weight tracking card -->
+    <div class="h-card" id="hw-weight" draggable="false" data-hwid="weight">
+      <div class="hw-controls">
+        <button class="hw-ctrl-btn" onclick="hToggleWide('hw-weight')">Wide</button>
+        <button class="hw-ctrl-btn hw-del" onclick="hHideWidget('hw-weight')">Hide</button>
+      </div>
+      <div style="font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:12px">Weight</div>
+      <div class="weight-graph-wrap" id="weightGraphWrap">
+        <svg id="weightSVG" viewBox="0 0 300 150" preserveAspectRatio="none">
+          <text x="150" y="80" text-anchor="middle" fill="rgba(255,255,255,.2)" font-size="12">No data yet</text>
+        </svg>
+      </div>
+      <div class="weight-entry-row" style="margin-top:10px">
+        <input type="number" class="h-input" id="weightInput" placeholder="lbs / kg" step="0.1" style="width:110px;flex:none">
+        <input type="date" class="h-input" id="weightDate" style="flex:none;width:150px">
+        <button class="h-btn" id="weightAdd">Log</button>
+      </div>
+      <div class="weight-history" id="weightHistory"></div>
+    </div>
+
+    <!-- Calorie & Macro dashboard -->
+    <div class="h-card" id="hw-macros" draggable="false" data-hwid="macros" style="grid-column:span 2">
+      <div class="hw-controls">
+        <button class="hw-ctrl-btn" onclick="hToggleWide('hw-macros')">Wide</button>
+        <button class="hw-ctrl-btn hw-del" onclick="hHideWidget('hw-macros')">Hide</button>
+      </div>
+      <div style="font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:14px">Calories &amp; Macros — Today</div>
+      <div class="macro-ring-row">
+        <div class="macro-ring-wrap">
+          <svg viewBox="0 0 110 110">
+            <circle cx="55" cy="55" r="46" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="9"/>
+            <circle id="calArc" cx="55" cy="55" r="46" fill="none" stroke="#F2C063" stroke-width="9"
+              stroke-linecap="round" transform="rotate(-90 55 55)"
+              stroke-dasharray="289.03" stroke-dashoffset="289.03"
+              style="transition:stroke-dashoffset .7s cubic-bezier(.22,1,.36,1)"/>
+          </svg>
+          <div class="macro-ring-lbl">
+            <span class="macro-cal-big" id="macroCalNum">0</span>
+            <span class="macro-cal-sub">kcal</span>
+          </div>
+        </div>
+        <div class="macro-bars">
+          <div class="macro-bar-row">
+            <div class="macro-bar-header">
+              <span class="macro-bar-name">Protein</span>
+              <span class="macro-bar-val" id="macroProteinVal">0g</span>
+            </div>
+            <div class="macro-bar-track"><div class="macro-bar-fill" id="macroProteinBar" style="background:#7DD3FC;width:0%"></div></div>
+          </div>
+          <div class="macro-bar-row">
+            <div class="macro-bar-header">
+              <span class="macro-bar-name">Carbs</span>
+              <span class="macro-bar-val" id="macroCarbVal">0g</span>
+            </div>
+            <div class="macro-bar-track"><div class="macro-bar-fill" id="macroCarbBar" style="background:#F2C063;width:0%"></div></div>
+          </div>
+          <div class="macro-bar-row">
+            <div class="macro-bar-header">
+              <span class="macro-bar-name">Fat</span>
+              <span class="macro-bar-val" id="macroFatVal">0g</span>
+            </div>
+            <div class="macro-bar-track"><div class="macro-bar-fill" id="macroFatBar" style="background:#C084FC;width:0%"></div></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:4px">
+            <div style="flex:1;text-align:center;padding:6px;background:var(--card-bg,rgba(255,255,255,.03));border-radius:8px;border:1px solid var(--card-border)">
+              <div style="font-family:ui-monospace,monospace;font-size:11px;font-weight:800;color:var(--text-primary)" id="macroCalGoalDisp">2000</div>
+              <div style="font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-tertiary)">Goal</div>
+            </div>
+            <div style="flex:1;text-align:center;padding:6px;background:var(--card-bg,rgba(255,255,255,.03));border-radius:8px;border:1px solid var(--card-border)">
+              <div style="font-family:ui-monospace,monospace;font-size:11px;font-weight:800;color:var(--text-primary)" id="macroCalLeft">2000</div>
+              <div style="font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-tertiary)">Left</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Macro calorie goal setting -->
+      <div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap">
+        <span style="font-size:12px;color:var(--text-secondary);flex-shrink:0">Daily goal:</span>
+        <input type="number" class="h-input" id="calGoalInput" placeholder="2000" min="0" step="50" style="width:90px;flex:none">
+        <button class="h-btn" id="calGoalSave" style="padding:7px 14px;font-size:12px">Set</button>
+        <span style="font-size:11px;color:var(--text-tertiary)">kcal/day</span>
+      </div>
+
+      <!-- Macro log form -->
+      <div class="macro-form">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:4px">Log Meal Macros</div>
+        <div class="macro-form-row">
+          <input type="text" class="h-input" id="macroName" placeholder="Food / meal name" style="flex:2">
+          <input type="number" class="h-input" id="macroCal" placeholder="kcal" min="0" step="1" style="width:70px;flex:none">
+        </div>
+        <div class="macro-form-row">
+          <input type="number" class="h-input" id="macroProtein" placeholder="Protein g" min="0" step="0.1" style="width:100px;flex:none">
+          <input type="number" class="h-input" id="macroCarb" placeholder="Carbs g" min="0" step="0.1" style="width:100px;flex:none">
+          <input type="number" class="h-input" id="macroFat" placeholder="Fat g" min="0" step="0.1" style="width:100px;flex:none">
+          <button class="h-btn" id="macroAdd">Log</button>
+        </div>
+      </div>
+      <div class="macro-history" id="macroHistory"></div>
+    </div>
+
+    <!-- Heart Rate (Health Connect) -->
+    <div class="h-card hw-hidden" id="hw-heartrate" draggable="false" data-hwid="heartrate">
+      <div class="hw-controls">
+        <button class="hw-ctrl-btn" onclick="hToggleWide('hw-heartrate')">Wide</button>
+        <button class="hw-ctrl-btn hw-del" onclick="hHideWidget('hw-heartrate')">Hide</button>
+      </div>
+      <div class="hw-metric-header">Heart Rate</div>
+      <div><span class="hw-metric-val" id="hwHRVal">—</span><span class="hw-metric-unit">bpm</span></div>
+      <div class="hw-metric-sub" id="hwHRSub">No data yet</div>
+    </div>
+
+    <!-- Heart Rate Graph (Health Connect) -->
+    <div class="h-card hw-hidden" id="hw-hr-graph" draggable="false" data-hwid="hr-graph" style="grid-column:span 2">
+      <div class="hw-controls">
+        <button class="hw-ctrl-btn" onclick="hToggleWide('hw-hr-graph')">Wide</button>
+        <button class="hw-ctrl-btn hw-del" onclick="hHideWidget('hw-hr-graph')">Hide</button>
+      </div>
+      <div class="hw-metric-header">Heart Rate Graph</div>
+      <div style="display:flex;align-items:baseline;gap:4px">
+        <span class="hw-metric-val" id="hwHRGVal">—</span>
+        <span class="hw-metric-unit">bpm</span>
+      </div>
+      <div class="hw-metric-sub" id="hwHRGSub"></div>
+      <div id="hwHRGGraph" style="display:none;margin-top:10px">
+        <svg id="hwHRGSVG" style="width:100%;height:100px;display:block;overflow:visible" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+    </div>
+
+    <!-- Steps (Health Connect) -->
+    <div class="h-card hw-hidden" id="hw-steps" draggable="false" data-hwid="steps">
+      <div class="hw-controls">
+        <button class="hw-ctrl-btn" onclick="hToggleWide('hw-steps')">Wide</button>
+        <button class="hw-ctrl-btn hw-del" onclick="hHideWidget('hw-steps')">Hide</button>
+      </div>
+      <div class="hw-metric-header">Steps</div>
+      <div><span class="hw-metric-val" id="hwStepsVal">—</span></div>
+      <div class="hw-metric-sub" id="hwStepsSub">No data yet</div>
+    </div>
+
+    <!-- Oxygen Saturation (Health Connect) -->
+    <div class="h-card hw-hidden" id="hw-spo2" draggable="false" data-hwid="spo2">
+      <div class="hw-controls">
+        <button class="hw-ctrl-btn" onclick="hToggleWide('hw-spo2')">Wide</button>
+        <button class="hw-ctrl-btn hw-del" onclick="hHideWidget('hw-spo2')">Hide</button>
+      </div>
+      <div class="hw-metric-header">Oxygen Saturation</div>
+      <div><span class="hw-metric-val" id="hwSPO2Val">—</span><span class="hw-metric-unit">%</span></div>
+      <div class="hw-metric-sub" id="hwSPO2Sub">No data yet</div>
+    </div>
+
+    <!-- HRV (Health Connect) -->
+    <div class="h-card hw-hidden" id="hw-hrv" draggable="false" data-hwid="hrv">
+      <div class="hw-controls">
+        <button class="hw-ctrl-btn" onclick="hToggleWide('hw-hrv')">Wide</button>
+        <button class="hw-ctrl-btn hw-del" onclick="hHideWidget('hw-hrv')">Hide</button>
+      </div>
+      <div class="hw-metric-header">HRV</div>
+      <div><span class="hw-metric-val" id="hwHRVVal">—</span><span class="hw-metric-unit">ms</span></div>
+      <div class="hw-metric-sub" id="hwHRVSub">No data yet</div>
+    </div>
+
+    <!-- Floors Climbed (Health Connect) -->
+    <div class="h-card hw-hidden" id="hw-floors" draggable="false" data-hwid="floors">
+      <div class="hw-controls">
+        <button class="hw-ctrl-btn" onclick="hToggleWide('hw-floors')">Wide</button>
+        <button class="hw-ctrl-btn hw-del" onclick="hHideWidget('hw-floors')">Hide</button>
+      </div>
+      <div class="hw-metric-header">Floors Climbed</div>
+      <div><span class="hw-metric-val" id="hwFloorsVal">—</span></div>
+      <div class="hw-metric-sub" id="hwFloorsSub">No data yet</div>
+    </div>
+
+    <!-- Exercise (Health Connect) -->
+    <div class="h-card hw-hidden" id="hw-exercise" draggable="false" data-hwid="exercise">
+      <div class="hw-controls">
+        <button class="hw-ctrl-btn" onclick="hToggleWide('hw-exercise')">Wide</button>
+        <button class="hw-ctrl-btn hw-del" onclick="hHideWidget('hw-exercise')">Hide</button>
+      </div>
+      <div class="hw-metric-header">Last Exercise</div>
+      <div><span class="hw-metric-val" id="hwExerciseVal" style="font-size:18px;word-break:break-word">—</span></div>
+      <div class="hw-metric-sub" id="hwExerciseSub">No data yet</div>
+    </div>
+
+    <!-- Body Fat (Health Connect) -->
+    <div class="h-card hw-hidden" id="hw-bodyfat" draggable="false" data-hwid="bodyfat">
+      <div class="hw-controls">
+        <button class="hw-ctrl-btn" onclick="hToggleWide('hw-bodyfat')">Wide</button>
+        <button class="hw-ctrl-btn hw-del" onclick="hHideWidget('hw-bodyfat')">Hide</button>
+      </div>
+      <div class="hw-metric-header">Body Fat</div>
+      <div><span class="hw-metric-val" id="hwBFVal">—</span><span class="hw-metric-unit">%</span></div>
+      <div class="hw-metric-sub" id="hwBFSub">No data yet</div>
+    </div>
+
+    <!-- Respiratory Rate (Health Connect) -->
+    <div class="h-card hw-hidden" id="hw-resprate" draggable="false" data-hwid="resprate">
+      <div class="hw-controls">
+        <button class="hw-ctrl-btn" onclick="hToggleWide('hw-resprate')">Wide</button>
+        <button class="hw-ctrl-btn hw-del" onclick="hHideWidget('hw-resprate')">Hide</button>
+      </div>
+      <div class="hw-metric-header">Respiratory Rate</div>
+      <div><span class="hw-metric-val" id="hwRespVal">—</span><span class="hw-metric-unit">br/min</span></div>
+      <div class="hw-metric-sub" id="hwRespSub">No data yet</div>
+    </div>
+
+    <!-- Skin Temperature (Health Connect) -->
+    <div class="h-card hw-hidden" id="hw-skintemp" draggable="false" data-hwid="skintemp">
+      <div class="hw-controls">
+        <button class="hw-ctrl-btn" onclick="hToggleWide('hw-skintemp')">Wide</button>
+        <button class="hw-ctrl-btn hw-del" onclick="hHideWidget('hw-skintemp')">Hide</button>
+      </div>
+      <div class="hw-metric-header">Skin Temperature</div>
+      <div><span class="hw-metric-val" id="hwSTempVal">—</span><span class="hw-metric-unit">°C</span></div>
+      <div class="hw-metric-sub" id="hwSTempSub">No data yet</div>
+    </div>
+
+    <!-- Distance (Health Connect) -->
+    <div class="h-card hw-hidden" id="hw-distance" draggable="false" data-hwid="distance">
+      <div class="hw-controls">
+        <button class="hw-ctrl-btn" onclick="hToggleWide('hw-distance')">Wide</button>
+        <button class="hw-ctrl-btn hw-del" onclick="hHideWidget('hw-distance')">Hide</button>
+      </div>
+      <div class="hw-metric-header">Distance</div>
+      <div><span class="hw-metric-val" id="hwDistVal">—</span><span class="hw-metric-unit">km</span></div>
+      <div class="hw-metric-sub" id="hwDistSub">No data yet</div>
+    </div>
+
+    <!-- Hydration (Health Connect) -->
+    <div class="h-card hw-hidden" id="hw-hydration" draggable="false" data-hwid="hydration">
+      <div class="hw-controls">
+        <button class="hw-ctrl-btn" onclick="hToggleWide('hw-hydration')">Wide</button>
+        <button class="hw-ctrl-btn hw-del" onclick="hHideWidget('hw-hydration')">Hide</button>
+      </div>
+      <div class="hw-metric-header">Hydration (HC)</div>
+      <div><span class="hw-metric-val" id="hwHydVal">—</span><span class="hw-metric-unit">L</span></div>
+      <div class="hw-metric-sub" id="hwHydSub">No data yet</div>
+    </div>
+
+    <!-- Sleep (Health Connect) -->
+    <div class="h-card hw-hidden" id="hw-sleep-hc" draggable="false" data-hwid="sleep-hc" style="grid-column:span 2">
+      <div class="hw-controls">
+        <button class="hw-ctrl-btn" onclick="hToggleWide('hw-sleep-hc')">Wide</button>
+        <button class="hw-ctrl-btn hw-del" onclick="hHideWidget('hw-sleep-hc')">Hide</button>
+      </div>
+      <div class="hw-metric-header">Sleep</div>
+      <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
+        <div>
+          <div><span class="hw-metric-val" id="hwSleepDur">—</span></div>
+          <div class="hw-metric-sub" id="hwSleepTimes"></div>
+        </div>
+        <div style="flex:1;min-width:160px" id="hwSleepStages"></div>
+      </div>
+    </div>
+
+    <!-- Weight Trend (Health Connect) -->
+    <div class="h-card hw-hidden" id="hw-weight-hc" draggable="false" data-hwid="weight-hc">
+      <div class="hw-controls">
+        <button class="hw-ctrl-btn" onclick="hToggleWide('hw-weight-hc')">Wide</button>
+        <button class="hw-ctrl-btn hw-del" onclick="hHideWidget('hw-weight-hc')">Hide</button>
+      </div>
+      <div class="hw-metric-header">Weight Trend</div>
+      <div style="display:flex;align-items:baseline;gap:4px">
+        <span class="hw-metric-val" id="hwWtVal">—</span>
+        <span class="hw-metric-unit">lbs</span>
+      </div>
+      <div class="hw-metric-sub" id="hwWtSub"></div>
+      <div id="hwWtGraph" style="display:none;margin-top:10px">
+        <svg id="hwWtSVG" style="width:100%;height:100px;display:block;overflow:visible" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+    </div>
+
+    <!-- Calories Burned (Health Connect) -->
+    <div class="h-card hw-hidden" id="hw-bmr" draggable="false" data-hwid="bmr">
+      <div class="hw-controls">
+        <button class="hw-ctrl-btn" onclick="hToggleWide('hw-bmr')">Wide</button>
+        <button class="hw-ctrl-btn hw-del" onclick="hHideWidget('hw-bmr')">Hide</button>
+      </div>
+      <div class="hw-metric-header">Calories Burned</div>
+      <div><span class="hw-metric-val" id="hwBMRVal">—</span><span class="hw-metric-unit">kcal</span></div>
+      <div class="hw-metric-sub" id="hwBMRSub">No data yet</div>
+    </div>
+
+  </div>
+
+  <!-- Customize toggle -->
+  <div style="display:flex;justify-content:center;margin-top:14px;padding-bottom:8px">
+    <button class="h-cust-btn" id="hStartCustomizeBtn" style="font-size:11px;opacity:.5">Customize Layout</button>
+  </div>
+</div>
+
+<!-- Workouts -->
+<div class="h-panel" id="panelWorkouts">
+  <iframe src="gym-standalone.html" title="Gym Coach" loading="eager"></iframe>
+</div>
+
+<!-- Sleep -->
+<div class="h-panel" id="panelSleep">
+  <div class="sec-title">Log Sleep</div>
+  <div class="h-card">
+    <div class="sleep-form">
+      <div class="sleep-row">
+        <span class="sleep-label">Bedtime</span>
+        <input type="time" class="h-input" id="sleepBed" value="23:00">
+        <span class="sleep-label" style="min-width:64px">Wake up</span>
+        <input type="time" class="h-input" id="sleepWake" value="07:00">
+      </div>
+      <div class="sleep-row">
+        <span class="sleep-label">Date</span>
+        <input type="date" class="h-input" id="sleepDate" style="flex:none;width:160px">
+        <span class="sleep-label" style="min-width:56px">Quality</span>
+        <select class="h-select" id="sleepQuality">
+          <option value="Great">Great</option>
+          <option value="Good" selected>Good</option>
+          <option value="Fair">Fair</option>
+          <option value="Poor">Poor</option>
+        </select>
+        <button class="h-btn" id="sleepAdd">Log</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-title">Sleep History</div>
+  <div class="h-card">
+    <div class="sleep-log-list" id="sleepList"></div>
+    <div class="empty-state" id="sleepEmpty">No sleep logs yet.</div>
+  </div>
+</div>
+
+<!-- Food -->
+<div class="h-panel" id="panelFood">
+  <div class="sec-title">Log Meal</div>
+  <div class="h-card">
+    <div class="food-form">
+      <div class="sleep-row">
+        <input type="text" class="h-input" id="foodName" placeholder="Food or meal…" style="flex:2">
+        <input type="number" class="h-input" id="foodCal" placeholder="kcal" min="0" step="1" style="width:80px;flex:none">
+      </div>
+      <div class="sleep-row">
+        <select class="h-select" id="foodMeal">
+          <option value="Breakfast">Breakfast</option>
+          <option value="Lunch" selected>Lunch</option>
+          <option value="Dinner">Dinner</option>
+          <option value="Snack">Snack</option>
+        </select>
+        <input type="date" class="h-input" id="foodDate" style="flex:none;width:160px">
+        <button class="h-btn" id="foodAdd">Log</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-title">Today's Food</div>
+  <div class="h-card">
+    <div class="food-log-list" id="foodList"></div>
+    <div class="empty-state" id="foodEmpty">No meals logged today.</div>
+    <div class="calorie-total">
+      <span class="calorie-total-lbl">Total today</span>
+      <span class="calorie-total-val" id="foodTotal">0 kcal</span>
+    </div>
+  </div>
+</div>
+
+<!-- Health Goals -->
+<div class="h-panel" id="panelGoals">
+  <div class="sec-title">Health Goals</div>
+  <div class="h-card">
+    <div class="hg-date" id="hgDate"></div>
+    <div id="hgList"></div>
+    <div class="hg-empty" id="hgEmpty" style="display:none">No health goals for today. Add goals in the Goals tab or below.</div>
+    <div class="hg-add-row">
+      <input type="text" class="h-input" id="hgInput" placeholder="Add a health goal…" style="flex:1">
+      <button class="h-btn" id="hgAdd">Add</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Subtab switching ──
+document.querySelectorAll('#hSubnav .ctx-stab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('#hSubnav .ctx-stab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.h-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel' + tab.dataset.panel.charAt(0).toUpperCase() + tab.dataset.panel.slice(1)).classList.add('active');
+  });
+});
+
+// ── Helpers ──
+function uid(){ return Math.random().toString(36).slice(2,10); }
+function today(){ return new Date().toISOString().slice(0,10); }
+function activeDateKey(){
+  const now=new Date(), d=new Date(now);
+  if(now.getHours()<6) d.setDate(d.getDate()-1);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+// ── Water ──
+const WATER_KEY = 'health:water:v2';
+function waterGet(){
+  try{ return JSON.parse(localStorage.getItem(WATER_KEY)) || {goal:8,logs:{}}; } catch{ return {goal:8,logs:{}}; }
+}
+function waterSet(d){ localStorage.setItem(WATER_KEY,JSON.stringify(d)); renderWater(); renderGlance(); }
+
+function renderWater(){
+  const d = waterGet();
+  const t = today();
+  const count = d.logs[t] || 0;
+  const goal = d.goal || 8;
+  const pct = Math.min(1, count / goal);
+  const C = 2 * Math.PI * 50;
+  document.getElementById('waterGoalInput').value = goal;
+  document.getElementById('waterCount').textContent = count;
+  document.getElementById('waterCountSub').textContent = '/ ' + goal;
+  document.getElementById('waterArc').style.strokeDashoffset = (C * (1 - pct)).toFixed(2);
+  const glW = document.getElementById('glanceWater');
+  if (glW) { glW.textContent = Math.round(pct*100) + '%'; glW.className = 'stat-val' + (pct >= 1 ? ' good' : pct >= 0.5 ? '' : ' warn'); }
+}
+
+document.getElementById('waterGoalInput').addEventListener('change', () => {
+  const g = parseInt(document.getElementById('waterGoalInput').value) || 8;
+  const d = waterGet(); d.goal = g; waterSet(d);
+});
+document.getElementById('waterAdd').addEventListener('click', () => {
+  const d = waterGet(); const t = today();
+  d.logs[t] = (d.logs[t] || 0) + 1; waterSet(d);
+});
+document.getElementById('waterReset').addEventListener('click', () => {
+  if(!confirm('Reset today\'s water count?')) return;
+  const d = waterGet(); d.logs[today()] = 0; waterSet(d);
+});
+
+// ── Glance stats ──
+function renderGlance(){
+  // Weight handled in _hcRenderWeight
+  // Sleep: last log
+  const sleepData = sleepGet();
+  const lastSleep = (sleepData.logs||[]).find(l => l.date === today());
+  const glS = document.getElementById('glanceSleep');
+  if(lastSleep){ glS.textContent = lastSleep.durStr; glS.className = 'stat-val' + (lastSleep.durH >= 7 ? ' good' : ' warn'); }
+  else { glS.textContent = '—'; glS.className = 'stat-val'; }
+  // Calories: food logs + macro logs combined
+  const foodData = foodGet();
+  let macroDt={logs:[]}; try{macroDt=JSON.parse(localStorage.getItem('health:macro:v1'))||{logs:[]};}catch{}
+  const foodCal = (foodData.logs||[]).filter(l=>l.date===today()).reduce((s,l)=>s+(l.cal||0),0);
+  const macroCal = (macroDt.logs||[]).filter(l=>l.date===today()).reduce((s,l)=>s+(l.cal||0),0);
+  const todayCal = foodCal + macroCal;
+  const glC = document.getElementById('glanceCal');
+  glC.textContent = todayCal ? todayCal+'kcal' : '—';
+  glC.className = 'stat-val' + (todayCal > 0 ? '' : '');
+}
+
+// ── Sleep ──
+const SLEEP_KEY = 'health:sleep:v1';
+function sleepGet(){ try{ return JSON.parse(localStorage.getItem(SLEEP_KEY)) || {logs:[]}; } catch{ return {logs:[]}; } }
+function sleepSet(d){ localStorage.setItem(SLEEP_KEY, JSON.stringify(d)); renderSleep(); renderGlance(); }
+
+function sleepDuration(bed, wake){
+  const [bh,bm] = bed.split(':').map(Number);
+  const [wh,wm] = wake.split(':').map(Number);
+  let mins = (wh*60+wm) - (bh*60+bm);
+  if(mins < 0) mins += 24*60;
+  const h = Math.floor(mins/60), m = mins%60;
+  return { h, m, str: h+'h '+(m?m+'m':''), mins };
+}
+
+document.getElementById('sleepDate').value = today();
+document.getElementById('sleepAdd').addEventListener('click', () => {
+  const bed = document.getElementById('sleepBed').value;
+  const wake = document.getElementById('sleepWake').value;
+  const date = document.getElementById('sleepDate').value || today();
+  const quality = document.getElementById('sleepQuality').value;
+  if(!bed || !wake) return;
+  const dur = sleepDuration(bed, wake);
+  const d = sleepGet();
+  d.logs.unshift({ id:uid(), date, bed, wake, quality, durStr:dur.str, durH:dur.h+dur.m/60 });
+  if(d.logs.length > 90) d.logs = d.logs.slice(0,90);
+  sleepSet(d);
+});
+
+function renderSleep(){
+  const d = sleepGet();
+  const list = document.getElementById('sleepList');
+  const empty = document.getElementById('sleepEmpty');
+  list.innerHTML = '';
+  if(!d.logs.length){ empty.style.display='block'; return; }
+  empty.style.display = 'none';
+  d.logs.slice(0,20).forEach(l => {
+    const row = document.createElement('div'); row.className = 'sleep-log-item';
+    const qColor = l.quality==='Great'?'#6BE3A4':l.quality==='Good'?'#7DD3FC':l.quality==='Fair'?'#F2C063':'#F87171';
+    row.innerHTML = `
+      <span class="sleep-date">${l.date ? l.date.slice(5) : ''}</span>
+      <span class="sleep-duration">${l.durStr||'?'}</span>
+      <span class="sleep-times">${l.bed} → ${l.wake}</span>
+      <span class="sleep-quality" style="color:${qColor}">${l.quality||''}</span>
+      <button class="item-del" title="Delete">×</button>`;
+    row.querySelector('.item-del').addEventListener('click', e => {
+      e.stopPropagation();
+      const dd = sleepGet(); dd.logs = dd.logs.filter(x=>x.id!==l.id); sleepSet(dd);
+    });
+    list.appendChild(row);
+  });
+}
+
+// ── Food ──
+const FOOD_KEY = 'health:food:v1';
+function foodGet(){ try{ return JSON.parse(localStorage.getItem(FOOD_KEY)) || {logs:[]}; } catch{ return {logs:[]}; } }
+function foodSet(d){ localStorage.setItem(FOOD_KEY, JSON.stringify(d)); renderFood(); renderGlance(); }
+
+document.getElementById('foodDate').value = today();
+document.getElementById('foodAdd').addEventListener('click', () => {
+  const name = document.getElementById('foodName').value.trim();
+  const cal = parseInt(document.getElementById('foodCal').value) || 0;
+  const meal = document.getElementById('foodMeal').value;
+  const date = document.getElementById('foodDate').value || today();
+  if(!name) return;
+  const d = foodGet();
+  d.logs.unshift({ id:uid(), date, name, cal, meal });
+  if(d.logs.length > 300) d.logs = d.logs.slice(0,300);
+  foodSet(d);
+  document.getElementById('foodName').value = '';
+  document.getElementById('foodCal').value = '';
+});
+document.getElementById('foodName').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('foodAdd').click(); });
+
+function renderFood(){
+  const d = foodGet();
+  const t = today();
+  const todayLogs = d.logs.filter(l => l.date === t);
+  const list = document.getElementById('foodList');
+  const empty = document.getElementById('foodEmpty');
+  list.innerHTML = '';
+  if(!todayLogs.length){ empty.style.display='block'; }
+  else {
+    empty.style.display = 'none';
+    todayLogs.forEach(l => {
+      const row = document.createElement('div'); row.className = 'food-log-item';
+      row.innerHTML = `
+        <span class="food-meal-tag">${l.meal||'—'}</span>
+        <span class="food-name">${l.name}</span>
+        <span class="food-cal">${l.cal||0} kcal</span>
+        <button class="item-del" title="Delete">×</button>`;
+      row.querySelector('.item-del').addEventListener('click', e => {
+        e.stopPropagation();
+        const dd = foodGet(); dd.logs = dd.logs.filter(x=>x.id!==l.id); foodSet(dd);
+      });
+      list.appendChild(row);
+    });
+  }
+  const total = todayLogs.reduce((s,l) => s+(l.cal||0), 0);
+  document.getElementById('foodTotal').textContent = total + ' kcal';
+}
+
+// ── Health Goals (shared with Goals tab via goals:DATEKEY + goals:templates:v2) ──
+const TPL_KEY_H = 'goals:templates:v2';
+
+function tmplGetH(){
+  try{ return JSON.parse(localStorage.getItem(TPL_KEY_H)) || []; } catch{ return []; }
+}
+function shouldFireH(tmpl, dateKey){
+  const d = new Date(dateKey + 'T12:00:00');
+  const s = tmpl.schedule || {type:'daily'};
+  if(tmpl.createdAt && dateKey < tmpl.createdAt) return false;
+  switch(s.type){
+    case 'daily': return true;
+    case 'weekly': return (s.days||[]).includes(d.getDay());
+    case 'monthly': return (s.datesOfMonth||[1]).includes(d.getDate());
+    case 'custom': {
+      const start = new Date((tmpl.createdAt||dateKey)+'T12:00:00');
+      const diff = Math.round((d-start)/86400000);
+      return diff>=0 && diff%Math.max(1,s.intervalDays||1)===0;
+    }
+    default: return true;
+  }
+}
+function materializeH(dateKey){
+  const templates = tmplGetH();
+  const existing  = getRawH(dateKey);
+  const existMap  = {};
+  existing.forEach(g=>{ if(g.templateId) existMap[g.templateId]=g; });
+  const goals = [];
+  templates.forEach(tmpl=>{
+    if(!shouldFireH(tmpl,dateKey)) return;
+    const ex = existMap[tmpl.id];
+    goals.push({ id:tmpl.id+':'+dateKey, templateId:tmpl.id, text:tmpl.text, category:tmpl.category||'personal', schedule:tmpl.schedule, done:ex?!!ex.done:false });
+  });
+  existing.filter(g=>!g.templateId).forEach(g=>goals.push(g));
+  localStorage.setItem('goals:'+dateKey, JSON.stringify(goals));
+  return goals;
+}
+function getRawH(dateKey){ try{ return JSON.parse(localStorage.getItem('goals:'+dateKey))||[]; } catch{ return []; } }
+function goalsGetH(){ return materializeH(activeDateKey()); }
+function goalsSetH(arr){
+  localStorage.setItem('goals:'+activeDateKey(), JSON.stringify(arr));
+  window.dispatchEvent(new CustomEvent('goals-changed'));
+  renderHealthGoals();
+}
+
+document.getElementById('hgDate').textContent = 'Showing health goals for: ' + activeDateKey();
+
+document.getElementById('hgAdd').addEventListener('click', () => {
+  const text = document.getElementById('hgInput').value.trim();
+  if(!text) return;
+  // Add as a template (recurring daily health goal)
+  const templates = tmplGetH();
+  templates.push({ id:uid(), text, category:'health', schedule:{type:'daily'}, createdAt:activeDateKey() });
+  localStorage.setItem(TPL_KEY_H, JSON.stringify(templates));
+  window.dispatchEvent(new CustomEvent('goals-changed'));
+  document.getElementById('hgInput').value = '';
+  renderHealthGoals();
+});
+document.getElementById('hgInput').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('hgAdd').click(); });
+
+function renderHealthGoals(){
+  const all = goalsGetH();
+  const goals = all.filter(g => (g.category||'personal') === 'health');
+
+  const list = document.getElementById('hgList');
+  const empty = document.getElementById('hgEmpty');
+  list.innerHTML = '';
+
+  if(!goals.length){ empty.style.display='block'; return; }
+  empty.style.display = 'none';
+
+  goals.forEach(g => {
+    const item = document.createElement('div');
+    item.className = 'goal-item' + (g.done?' done':'');
+    item.innerHTML = `
+      <div class="goal-cb${g.done?' done':''}"></div>
+      <span class="goal-text">${g.text||''}</span>
+      <span class="goal-cat">${g.schedule?({daily:'Daily',weekly:'Weekly',monthly:'Monthly',custom:'Custom'}[g.schedule.type]||''):''}</span>`;
+    item.addEventListener('click', () => {
+      const dateKey = activeDateKey();
+      const arr = getRawH(dateKey);
+      const idx = arr.findIndex(x => x.id === g.id);
+      if(idx !== -1){ arr[idx].done = !arr[idx].done; goalsSetH(arr); }
+    });
+    list.appendChild(item);
+  });
+}
+
+// ── Weight tracking ──
+const WEIGHT_KEY='health:weight:v1';
+function weightGet(){try{return JSON.parse(localStorage.getItem(WEIGHT_KEY))||{logs:[]};}catch{return{logs:[]};}}
+function weightSet(d){localStorage.setItem(WEIGHT_KEY,JSON.stringify(d));renderWeight();}
+
+document.getElementById('weightDate').value=today();
+document.getElementById('weightAdd').addEventListener('click',()=>{
+  const val=parseFloat(document.getElementById('weightInput').value);
+  const dt=document.getElementById('weightDate').value||today();
+  if(!val||val<=0)return;
+  const d=weightGet();
+  d.logs=d.logs.filter(l=>l.date!==dt); // replace same date
+  d.logs.push({date:dt,val});
+  d.logs.sort((a,b)=>a.date.localeCompare(b.date));
+  if(d.logs.length>365)d.logs=d.logs.slice(-365);
+  weightSet(d);
+  document.getElementById('weightInput').value='';
+});
+
+function renderWeight(){
+  const d=weightGet();
+  const list=document.getElementById('weightHistory');
+  const svg=document.getElementById('weightSVG');
+  if(!d.logs.length){
+    svg.innerHTML='<text x="150" y="80" text-anchor="middle" fill="rgba(255,255,255,.2)" font-size="12">No data yet</text>';
+    list.innerHTML='';return;
+  }
+  // Draw SVG line chart
+  const vals=d.logs.map(l=>l.val);
+  const minV=Math.min(...vals),maxV=Math.max(...vals);
+  const range=Math.max(maxV-minV,1);
+  const W=300,H=150,PAD=18;
+  const pts=d.logs.map((l,i)=>{
+    const x=PAD+(i/(Math.max(d.logs.length-1,1)))*(W-PAD*2);
+    const y=PAD+(1-(l.val-minV)/range)*(H-PAD*2);
+    return[x.toFixed(1),y.toFixed(1)];
+  });
+  const polyPts=pts.map(p=>p.join(',')).join(' ');
+  // Fill area
+  const fillPts=`${pts[0][0]},${H-PAD} `+polyPts+` ${pts[pts.length-1][0]},${H-PAD}`;
+  const accent=getComputedStyle(document.documentElement).getPropertyValue('--strip-accent').trim()||'#7DD3FC';
+  svg.innerHTML=`
+    <defs><linearGradient id="wGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${accent}" stop-opacity=".25"/><stop offset="100%" stop-color="${accent}" stop-opacity="0"/></linearGradient></defs>
+    <polygon points="${fillPts}" fill="url(#wGrad)"/>
+    <polyline points="${polyPts}" fill="none" stroke="${accent}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    ${pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="${accent}"/>`).join('')}
+    <text x="${pts[0][0]}" y="${H-2}" text-anchor="middle" fill="rgba(255,255,255,.35)" font-size="9">${d.logs[0].date.slice(5)}</text>
+    <text x="${pts[pts.length-1][0]}" y="${H-2}" text-anchor="end" fill="rgba(255,255,255,.35)" font-size="9">${d.logs[d.logs.length-1].date.slice(5)}</text>
+    <text x="${W-PAD}" y="${PAD}" text-anchor="end" fill="rgba(255,255,255,.35)" font-size="9">${maxV}</text>
+    <text x="${W-PAD}" y="${H-PAD}" text-anchor="end" fill="rgba(255,255,255,.35)" font-size="9">${minV}</text>`;
+  // History list (latest first)
+  list.innerHTML=[...d.logs].reverse().slice(0,10).map((l,i,arr)=>{
+    const prev=arr[i+1];
+    const diff=prev?l.val-prev.val:0;
+    const cls=diff>0?'up':diff<0?'down':'';
+    const diffStr=diff?`${diff>0?'+':''}${diff.toFixed(1)}`:'';
+    return`<div class="weight-log-item">
+      <span class="weight-log-date">${l.date.slice(5)}</span>
+      <span class="weight-log-val">${l.val}</span>
+      ${diffStr?`<span class="weight-log-change ${cls}">${diffStr}</span>`:''}
+      <button class="item-del" title="Delete" onclick="(()=>{const dd=weightGet();dd.logs=dd.logs.filter(x=>x.date!=='${l.date}');weightSet(dd);})()">×</button>
+    </div>`;
+  }).join('');
+}
+
+// ── Macro / calorie tracking ──
+const MACRO_KEY='health:macro:v1';
+function macroGet(){try{return JSON.parse(localStorage.getItem(MACRO_KEY))||{goal:2000,logs:[]};}catch{return{goal:2000,logs:[]};}}
+function macroSet(d){localStorage.setItem(MACRO_KEY,JSON.stringify(d));renderMacro();}
+
+document.getElementById('calGoalInput').addEventListener('change',()=>{});
+document.getElementById('calGoalSave').addEventListener('click',()=>{
+  const g=parseFloat(document.getElementById('calGoalInput').value)||2000;
+  const d=macroGet();d.goal=g;macroSet(d);
+});
+document.getElementById('macroAdd').addEventListener('click',()=>{
+  const name=document.getElementById('macroName').value.trim();
+  const cal=parseFloat(document.getElementById('macroCal').value)||0;
+  const protein=parseFloat(document.getElementById('macroProtein').value)||0;
+  const carb=parseFloat(document.getElementById('macroCarb').value)||0;
+  const fat=parseFloat(document.getElementById('macroFat').value)||0;
+  if(!name&&!cal)return;
+  const d=macroGet();
+  d.logs.unshift({id:uid(),date:today(),name:name||'Meal',cal,protein,carb,fat});
+  if(d.logs.length>500)d.logs=d.logs.slice(0,500);
+  macroSet(d);
+  ['macroName','macroCal','macroProtein','macroCarb','macroFat'].forEach(id=>document.getElementById(id).value='');
+  renderGlance();
+});
+document.getElementById('macroName').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('macroAdd').click();});
+
+function renderMacro(){
+  const d=macroGet();
+  const t=today();
+  const todayLogs=d.logs.filter(l=>l.date===t);
+  const totalCal=todayLogs.reduce((s,l)=>s+(l.cal||0),0);
+  const totalP=todayLogs.reduce((s,l)=>s+(l.protein||0),0);
+  const totalC=todayLogs.reduce((s,l)=>s+(l.carb||0),0);
+  const totalF=todayLogs.reduce((s,l)=>s+(l.fat||0),0);
+  const goal=d.goal||2000;
+
+  document.getElementById('calGoalInput').value=goal;
+  document.getElementById('macroCalGoalDisp').textContent=goal;
+  document.getElementById('macroCalLeft').textContent=Math.max(0,goal-totalCal);
+  document.getElementById('macroCalNum').textContent=totalCal;
+
+  // Ring
+  const ARC=289.03;
+  const pct=Math.min(1,totalCal/goal);
+  document.getElementById('calArc').style.strokeDashoffset=(ARC*(1-pct)).toFixed(2);
+  const ringColor=totalCal>goal?'#F87171':totalCal>goal*0.8?'#F2C063':'#6BE3A4';
+  document.getElementById('calArc').style.stroke=ringColor;
+
+  // Macro bars (estimated daily targets)
+  const targP=Math.round(goal*0.3/4); // 30% protein
+  const targC=Math.round(goal*0.45/4); // 45% carbs
+  const targF=Math.round(goal*0.25/9); // 25% fat
+  document.getElementById('macroProteinVal').textContent=totalP.toFixed(0)+'g';
+  document.getElementById('macroCarbVal').textContent=totalC.toFixed(0)+'g';
+  document.getElementById('macroFatVal').textContent=totalF.toFixed(0)+'g';
+  document.getElementById('macroProteinBar').style.width=Math.min(100,totalP/Math.max(targP,1)*100)+'%';
+  document.getElementById('macroCarbBar').style.width=Math.min(100,totalC/Math.max(targC,1)*100)+'%';
+  document.getElementById('macroFatBar').style.width=Math.min(100,totalF/Math.max(targF,1)*100)+'%';
+
+  // History
+  const hist=document.getElementById('macroHistory');
+  if(!todayLogs.length){hist.innerHTML='<div class="empty-state">No meals logged today.</div>';return;}
+  hist.innerHTML=todayLogs.map(l=>`
+    <div class="macro-log-item">
+      <span class="macro-log-name">${l.name}</span>
+      <div class="macro-pips">
+        ${l.cal?`<span class="macro-pip" style="color:#F2C063">${l.cal}kcal</span>`:''}
+        ${l.protein?`<span class="macro-pip" style="color:#7DD3FC">${l.protein}g P</span>`:''}
+        ${l.carb?`<span class="macro-pip" style="color:#F2C063">${l.carb}g C</span>`:''}
+        ${l.fat?`<span class="macro-pip" style="color:#C084FC">${l.fat}g F</span>`:''}
+      </div>
+      <button class="item-del" title="Delete" onclick="(()=>{const dd=macroGet();dd.logs=dd.logs.filter(x=>x.id!=='${l.id}');macroSet(dd);renderGlance();})()">×</button>
+    </div>`).join('');
+}
+
+// ── Init ──
+renderWater();
+renderSleep();
+renderFood();
+renderHealthGoals();
+renderWeight();
+renderMacro();
+renderGlance();
+
+
+// Listen for goals changes from other tabs
+window.addEventListener('storage', e => { if(e.key && e.key.startsWith('goals:')) renderHealthGoals(); });
+window.addEventListener('goals-changed', renderHealthGoals);
+
+// ── Health Overview widget customization ──
+const H_LAYOUT_KEY = 'health:overview:layout:v1';
+const H_ALL_WIDGETS = ['water','weight','macros','sleep-hc','weight-hc','heartrate','hr-graph','steps','spo2','hrv','floors','exercise','bodyfat','resprate','skintemp','distance','hydration','bmr'];
+
+function hLayoutGet(){ try{return JSON.parse(localStorage.getItem(H_LAYOUT_KEY))||{};}catch{return{};} }
+function hLayoutSet(l){ localStorage.setItem(H_LAYOUT_KEY, JSON.stringify(l)); }
+
+function hApplyLayout(){
+  const l = hLayoutGet();
+  const grid = document.getElementById('hWidgetGrid');
+  if (!grid) return;
+  H_ALL_WIDGETS.forEach(wid => {
+    const el = document.getElementById('hw-' + wid);
+    if (!el) return;
+    el.classList.toggle('hw-hidden', (l.hidden||[]).includes(wid));
+    if ((l.wide||[]).includes(wid)) el.style.gridColumn = 'span 2';
+    else if (wid !== 'macros') el.style.gridColumn = '';
+  });
+  if (l.order && l.order.length) {
+    l.order.forEach(wid => {
+      const el = document.getElementById('hw-' + wid);
+      if (el) grid.appendChild(el);
+    });
+  }
+}
+
+function hSaveCurrentOrder(){
+  const l = hLayoutGet();
+  const grid = document.getElementById('hWidgetGrid');
+  l.order = Array.from(grid.children).map(el => el.dataset.hwid).filter(Boolean);
+  hLayoutSet(l);
+}
+
+function hToggleWide(id){
+  const el = document.getElementById(id);
+  if (!el) return;
+  const wid = el.dataset.hwid;
+  const l = hLayoutGet();
+  l.wide = l.wide || [];
+  if (el.style.gridColumn === 'span 2') {
+    el.style.gridColumn = '';
+    l.wide = l.wide.filter(w => w !== wid);
+  } else {
+    el.style.gridColumn = 'span 2';
+    if (!l.wide.includes(wid)) l.wide.push(wid);
+  }
+  hLayoutSet(l);
+}
+
+function hHideWidget(id){
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add('hw-hidden');
+  const wid = el.dataset.hwid;
+  const l = hLayoutGet();
+  l.hidden = l.hidden || [];
+  if (!l.hidden.includes(wid)) l.hidden.push(wid);
+  hLayoutSet(l);
+}
+
+let _hDragSrc = null;
+
+function hEnableCustomize(on){
+  const grid = document.getElementById('hWidgetGrid');
+  const bar  = document.getElementById('hCustomizeBar');
+  const startBtn = document.getElementById('hStartCustomizeBtn');
+  if (!grid) return;
+  bar.style.display = on ? 'flex' : 'none';
+  startBtn.style.display = on ? 'none' : 'flex';
+  grid.querySelectorAll('.h-card').forEach(w => {
+    w.classList.toggle('hw-customize-mode', on);
+    w.draggable = on;
+  });
+  if (!on) { hSaveCurrentOrder(); return; }
+  grid.querySelectorAll('.h-card').forEach(w => {
+    w.ondragstart = e => { _hDragSrc = w; e.dataTransfer.effectAllowed = 'move'; };
+    w.ondragend   = () => { grid.querySelectorAll('.h-card').forEach(x => x.classList.remove('hw-drag-over')); hSaveCurrentOrder(); };
+    w.ondragover  = e => { e.preventDefault(); if (w !== _hDragSrc) w.classList.add('hw-drag-over'); };
+    w.ondragleave = () => w.classList.remove('hw-drag-over');
+    w.ondrop = e => {
+      e.preventDefault(); w.classList.remove('hw-drag-over');
+      if (_hDragSrc && w !== _hDragSrc) {
+        const all = [...grid.children];
+        const si = all.indexOf(_hDragSrc), ti = all.indexOf(w);
+        if (si < ti) w.after(_hDragSrc); else w.before(_hDragSrc);
+      }
+    };
+  });
+}
+
+document.getElementById('hStartCustomizeBtn').addEventListener('click', () => hEnableCustomize(true));
+document.getElementById('hDoneCustomizeBtn').addEventListener('click', () => hEnableCustomize(false));
+document.getElementById('hAddWidgetBtn').addEventListener('click', () => {
+  const l = hLayoutGet();
+  const hidden = l.hidden || [];
+  const toShow = H_ALL_WIDGETS.filter(w => hidden.includes(w));
+  if (!toShow.length) { alert('All widgets are visible.'); return; }
+  const wid = toShow[0];
+  const el = document.getElementById('hw-' + wid);
+  if (el) { el.classList.remove('hw-hidden'); l.hidden = hidden.filter(w => w !== wid); hLayoutSet(l); }
+});
+
+hApplyLayout();
+
+// ── Health Connect (Supabase) data ──
+const _HC_URL = localStorage.getItem('topbar:supabaseUrl') || '';
+const _HC_KEY = localStorage.getItem('topbar:supabaseKey') || '';
+let _hcSupa = null;
+
+async function _hcFetchLatest(table, limit) {
+  if (!_hcSupa) return null;
+  try {
+    const { data, error } = await _hcSupa.from(table).select('data,created_at').order('created_at', { ascending: false }).limit(limit || 1);
+    if (error || !data || !data.length) return null;
+    return (limit && limit > 1) ? data : data[0];
+  } catch (e) { return null; }
+}
+
+function _hcAgo(ts) {
+  if (!ts) return '';
+  const s = (Date.now() - new Date(ts).getTime()) / 1000;
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.round(s / 60) + 'm ago';
+  if (s < 86400) return Math.round(s / 3600) + 'h ago';
+  return Math.round(s / 86400) + 'd ago';
+}
+
+function _hcSet(valId, subId, val, sub) {
+  const v = document.getElementById(valId), s = document.getElementById(subId);
+  if (v) v.textContent = (val !== null && val !== undefined) ? val : '—';
+  if (s) s.textContent = sub || '';
+}
+
+// Data arrives as { records: [...], pageToken: null } — unwrap to the last record
+function _hcLastRec(d) {
+  if (d && d.records && d.records.length) return d.records[d.records.length - 1];
+  return d || {};
+}
+// Last sample within a record's samples array
+function _hcLastSample(rec) {
+  if (rec && rec.samples && rec.samples.length) return rec.samples[rec.samples.length - 1];
+  return null;
+}
+// Time-ago from a millisecond timestamp (Health Connect uses ms, not ISO strings)
+function _hcSampleAgo(ms) {
+  if (!ms) return '';
+  const s = (Date.now() - ms) / 1000;
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.round(s / 60) + 'm ago';
+  if (s < 86400) return Math.round(s / 3600) + 'h ago';
+  return Math.round(s / 86400) + 'd ago';
+}
+
+async function _hcRenderHeartRate() {
+  const row = await _hcFetchLatest('heart_rate');
+  if (!row) return;
+  const rec = _hcLastRec(row.data);
+  const sample = _hcLastSample(rec);
+  const bpm = sample ? sample.beatsPerMinute : (rec.beatsPerMinute || rec.value || null);
+  const ago = sample ? _hcSampleAgo(sample.time) : _hcAgo(row.created_at);
+  const val = bpm !== null ? Math.round(bpm) : null;
+  _hcSet('hwHRVal', 'hwHRSub', val, ago);
+  const g = document.getElementById('glanceHR');
+  if (g) { g.textContent = val !== null ? val + ' bpm' : '—'; g.className = 'stat-val' + (val !== null ? (val < 100 ? ' good' : ' warn') : ''); }
+}
+
+async function _hcRenderSteps() {
+  const row = await _hcFetchLatest('steps');
+  if (!row) return;
+  // Each upload contains many small records — sum them all for the daily total
+  const records = row.data && row.data.records ? row.data.records : [_hcLastRec(row.data)];
+  const n = records.reduce((sum, r) => sum + (r.count || 0), 0);
+  const val = n > 0 ? n.toLocaleString() : null;
+  _hcSet('hwStepsVal', 'hwStepsSub', val, _hcAgo(row.created_at));
+  const g = document.getElementById('glanceSteps');
+  if (g) { g.textContent = val || '—'; g.className = 'stat-val' + (n > 0 ? (n >= 8000 ? ' good' : n >= 4000 ? '' : ' warn') : ''); }
+}
+
+async function _hcRenderSPO2() {
+  const row = await _hcFetchLatest('oxygen_saturation');
+  if (!row) return;
+  const rec = _hcLastRec(row.data);
+  const sample = _hcLastSample(rec);
+  const src = sample || rec;
+  // percentage may be { value: 95 } or a plain number
+  let pct = null;
+  if (src.percentage !== null && src.percentage !== undefined) {
+    pct = typeof src.percentage === 'object' ? src.percentage.value : src.percentage;
+  } else if (src.saturation !== undefined) { pct = src.saturation; }
+  else if (src.value !== undefined) { pct = src.value; }
+  if (pct !== null && pct <= 1) pct = pct * 100;
+  const val = pct !== null ? Math.round(pct) : null;
+  _hcSet('hwSPO2Val', 'hwSPO2Sub', val, _hcAgo(row.created_at));
+  const g = document.getElementById('glanceSPO2');
+  if (g) { g.textContent = val !== null ? val + '%' : '—'; g.className = 'stat-val' + (val !== null ? (val >= 95 ? ' good' : ' warn') : ''); }
+}
+
+async function _hcRenderHRV() {
+  const row = await _hcFetchLatest('hrv');
+  if (!row) return;
+  const rec = _hcLastRec(row.data);
+  const sample = _hcLastSample(rec);
+  const ms = sample ? (sample.heartRateVariabilityMillis || sample.value) : (rec.heartRateVariabilityMillis || rec.value || null);
+  _hcSet('hwHRVVal', 'hwHRVSub', ms !== null ? Math.round(ms) : null, _hcAgo(row.created_at));
+}
+
+async function _hcRenderFloors() {
+  const row = await _hcFetchLatest('floors_climbed');
+  if (!row) return;
+  const rec = _hcLastRec(row.data);
+  const f = rec.floors !== undefined ? rec.floors : rec.floorsClimbed !== undefined ? rec.floorsClimbed : rec.value !== undefined ? rec.value : null;
+  _hcSet('hwFloorsVal', 'hwFloorsSub', f !== null ? Math.round(f) : null, _hcAgo(row.created_at));
+}
+
+async function _hcRenderExercise() {
+  const row = await _hcFetchLatest('exercise');
+  if (!row) return;
+  const rec = _hcLastRec(row.data);
+  const title = rec.title || rec.exerciseType || rec.type || 'Session';
+  let dur = '';
+  if (rec.startTime && rec.endTime) {
+    const mins = Math.round((rec.endTime - rec.startTime) / 60000);
+    if (mins > 0) dur = mins + ' min · ';
+  }
+  _hcSet('hwExerciseVal', 'hwExerciseSub', title, dur + _hcAgo(row.created_at));
+}
+
+async function _hcRenderBodyFat() {
+  const row = await _hcFetchLatest('body_fat');
+  if (!row) return;
+  const rec = _hcLastRec(row.data);
+  const pct = rec.percentage !== undefined ? rec.percentage : rec.bodyFatPercentage !== undefined ? rec.bodyFatPercentage : rec.value !== undefined ? rec.value : null;
+  _hcSet('hwBFVal', 'hwBFSub', pct !== null ? parseFloat(pct).toFixed(1) : null, _hcAgo(row.created_at));
+}
+
+async function _hcRenderRespRate() {
+  const row = await _hcFetchLatest('respiratory_rate');
+  if (!row) return;
+  const rec = _hcLastRec(row.data);
+  const sample = _hcLastSample(rec);
+  const rate = sample ? (sample.rate || sample.value) : (rec.rate || rec.respiratoryRate || rec.value || null);
+  _hcSet('hwRespVal', 'hwRespSub', rate !== null ? parseFloat(rate).toFixed(1) : null, _hcAgo(row.created_at));
+}
+
+async function _hcRenderSkinTemp() {
+  const row = await _hcFetchLatest('skin_temperature');
+  if (!row) return;
+  const rec = _hcLastRec(row.data);
+  let temp = null;
+  if (rec.temperature && rec.temperature.celsius !== undefined) temp = rec.temperature.celsius;
+  else if (rec.deltas && rec.deltas.length && rec.deltas[0].delta) temp = rec.deltas[0].delta.celsius;
+  else if (rec.celsius !== undefined) temp = rec.celsius;
+  else if (rec.value !== undefined) temp = rec.value;
+  _hcSet('hwSTempVal', 'hwSTempSub', temp !== null ? parseFloat(temp).toFixed(1) : null, _hcAgo(row.created_at));
+}
+
+async function _hcRenderDistance() {
+  const row = await _hcFetchLatest('distance');
+  if (!row) return;
+  const rec = _hcLastRec(row.data);
+  let m = null;
+  if (rec.distance && rec.distance.inMeters !== undefined) m = rec.distance.inMeters;
+  else if (rec.distanceMeters !== undefined) m = rec.distanceMeters;
+  else if (rec.value !== undefined) m = rec.value;
+  _hcSet('hwDistVal', 'hwDistSub', m !== null ? (m / 1000).toFixed(2) : null, _hcAgo(row.created_at));
+}
+
+async function _hcRenderHydration() {
+  const row = await _hcFetchLatest('hydration');
+  if (!row) return;
+  const rec = _hcLastRec(row.data);
+  let vol = null;
+  if (rec.volume && rec.volume.inLiters !== undefined) vol = rec.volume.inLiters;
+  else if (rec.liters !== undefined) vol = rec.liters;
+  else if (rec.value !== undefined) vol = rec.value;
+  _hcSet('hwHydVal', 'hwHydSub', vol !== null ? parseFloat(vol).toFixed(2) : null, _hcAgo(row.created_at));
+}
+
+async function _hcRenderBMR() {
+  const row = await _hcFetchLatest('total_calories');
+  if (!row) return;
+  // Sum kilocalories across all hourly records for the daily total
+  const records = row.data && row.data.records ? row.data.records : [_hcLastRec(row.data)];
+  const total = records.reduce((sum, r) => {
+    const kcal = r.energy ? (r.energy.kilocalories || 0) : 0;
+    return sum + kcal;
+  }, 0);
+  _hcSet('hwBMRVal', 'hwBMRSub', total > 0 ? Math.round(total).toLocaleString() : null, _hcAgo(row.created_at));
+}
+
+let _hcWtPoints = [];
+function _hcDrawWeightGraph() {
+  const card = document.getElementById('hw-weight-hc');
+  const graphEl = document.getElementById('hwWtGraph');
+  const svgEl = document.getElementById('hwWtSVG');
+  if (!card || !graphEl || !svgEl || _hcWtPoints.length < 2) { if(graphEl) graphEl.style.display='none'; return; }
+  const isWide = card.offsetWidth > 280;
+  graphEl.style.display = isWide ? 'block' : 'none';
+  if (!isWide) return;
+  const W = Math.max(200, card.offsetWidth - 40);
+  const H = 100;
+  const vals = _hcWtPoints.map(p => p.lbs);
+  const minV = Math.min(...vals), maxV = Math.max(...vals);
+  const range = maxV === minV ? 1 : maxV - minV;
+  const pad = {t:14, b:14, l:34, r:8};
+  const cw = W - pad.l - pad.r, ch = H - pad.t - pad.b;
+  const px = i => pad.l + (i / Math.max(1, _hcWtPoints.length - 1)) * cw;
+  const py = v => pad.t + (1 - (v - minV) / range) * ch;
+  const pathD = _hcWtPoints.map((p,i) => `${i===0?'M':'L'}${px(i).toFixed(1)},${py(p.lbs).toFixed(1)}`).join(' ');
+  const fillD = pathD + ` L${px(_hcWtPoints.length-1).toFixed(1)},${H} L${px(0).toFixed(1)},${H} Z`;
+  const step = Math.max(1, Math.ceil(_hcWtPoints.length / 6));
+  const dotsHtml = _hcWtPoints.map((p,i) => (i%step===0||i===_hcWtPoints.length-1)
+    ? `<circle cx="${px(i).toFixed(1)}" cy="${py(p.lbs).toFixed(1)}" r="2.5" fill="var(--ai-grad-2,#7DD3FC)"/>` : '').join('');
+  svgEl.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svgEl.innerHTML = `<defs><linearGradient id="hwWtFill" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#7DD3FC" stop-opacity="0.20"/><stop offset="100%" stop-color="#7DD3FC" stop-opacity="0"/>
+  </linearGradient></defs>
+  <path d="${fillD}" fill="url(#hwWtFill)"/>
+  <path d="${pathD}" fill="none" stroke="var(--ai-grad-2,#7DD3FC)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  ${dotsHtml}
+  <text x="${pad.l-3}" y="${(py(maxV)+4).toFixed(0)}" text-anchor="end" fill="rgba(255,255,255,.4)" font-size="9" font-family="ui-monospace,monospace">${maxV.toFixed(0)}</text>
+  <text x="${pad.l-3}" y="${(py(minV)+4).toFixed(0)}" text-anchor="end" fill="rgba(255,255,255,.4)" font-size="9" font-family="ui-monospace,monospace">${minV.toFixed(0)}</text>`;
+}
+
+async function _hcRenderWeightGraph() {
+  const rows = await _hcFetchLatest('weight', 25);
+  if (!rows) return;
+  const arr = Array.isArray(rows) ? rows : [rows];
+  _hcWtPoints = arr.map(row => {
+    const rec = _hcLastRec(row.data);
+    return rec.weight ? { lbs: Math.round(rec.weight.pounds * 10) / 10, t: row.created_at } : null;
+  }).filter(Boolean).reverse();
+  if (!_hcWtPoints.length) return;
+  const latest = _hcWtPoints[_hcWtPoints.length - 1];
+  const valEl = document.getElementById('hwWtVal');
+  const subEl = document.getElementById('hwWtSub');
+  if (valEl) valEl.textContent = latest.lbs.toFixed(1);
+  if (subEl) subEl.textContent = _hcAgo(arr[0].created_at);
+  _hcDrawWeightGraph();
+  const card = document.getElementById('hw-weight-hc');
+  if (card && !card._wObs) {
+    card._wObs = new ResizeObserver(_hcDrawWeightGraph);
+    card._wObs.observe(card);
+  }
+}
+
+let _hcHRPoints = [];
+function _hcDrawHRGraph() {
+  const card = document.getElementById('hw-hr-graph');
+  const graphEl = document.getElementById('hwHRGGraph');
+  const svgEl = document.getElementById('hwHRGSVG');
+  if (!card || !graphEl || !svgEl || _hcHRPoints.length < 2) { if (graphEl) graphEl.style.display = 'none'; return; }
+  const isWide = card.offsetWidth > 280;
+  graphEl.style.display = isWide ? 'block' : 'none';
+  if (!isWide) return;
+  const W = Math.max(200, card.offsetWidth - 40);
+  const H = 100;
+  const vals = _hcHRPoints.map(p => p.bpm);
+  const minV = Math.min(...vals), maxV = Math.max(...vals);
+  const range = maxV === minV ? 1 : maxV - minV;
+  const pad = { t: 14, b: 14, l: 34, r: 8 };
+  const cw = W - pad.l - pad.r, ch = H - pad.t - pad.b;
+  const px = i => pad.l + (i / Math.max(1, _hcHRPoints.length - 1)) * cw;
+  const py = v => pad.t + (1 - (v - minV) / range) * ch;
+  const pathD = _hcHRPoints.map((p, i) => `${i === 0 ? 'M' : 'L'}${px(i).toFixed(1)},${py(p.bpm).toFixed(1)}`).join(' ');
+  const fillD = pathD + ` L${px(_hcHRPoints.length - 1).toFixed(1)},${H} L${px(0).toFixed(1)},${H} Z`;
+  const step = Math.max(1, Math.ceil(_hcHRPoints.length / 8));
+  const dotsHtml = _hcHRPoints.map((p, i) => (i % step === 0 || i === _hcHRPoints.length - 1)
+    ? `<circle cx="${px(i).toFixed(1)}" cy="${py(p.bpm).toFixed(1)}" r="2.5" fill="#F87171"/>` : '').join('');
+  svgEl.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svgEl.innerHTML = `<defs><linearGradient id="hwHRGFill" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#F87171" stop-opacity="0.22"/><stop offset="100%" stop-color="#F87171" stop-opacity="0"/>
+  </linearGradient></defs>
+  <path d="${fillD}" fill="url(#hwHRGFill)"/>
+  <path d="${pathD}" fill="none" stroke="#F87171" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  ${dotsHtml}
+  <text x="${pad.l - 3}" y="${(py(maxV) + 4).toFixed(0)}" text-anchor="end" fill="rgba(255,255,255,.4)" font-size="9" font-family="ui-monospace,monospace">${maxV}</text>
+  <text x="${pad.l - 3}" y="${(py(minV) + 4).toFixed(0)}" text-anchor="end" fill="rgba(255,255,255,.4)" font-size="9" font-family="ui-monospace,monospace">${minV}</text>`;
+}
+
+async function _hcRenderHRGraph() {
+  const rows = await _hcFetchLatest('heart_rate', 30);
+  if (!rows) return;
+  const arr = Array.isArray(rows) ? rows : [rows];
+  const points = [];
+  arr.forEach(row => {
+    const records = row.data && row.data.records ? row.data.records : [_hcLastRec(row.data)];
+    records.forEach(rec => {
+      if (rec.samples && rec.samples.length) {
+        rec.samples.forEach(s => { if (s.beatsPerMinute != null) points.push({ bpm: Math.round(s.beatsPerMinute), t: s.time }); });
+      } else if (rec.beatsPerMinute != null) {
+        points.push({ bpm: Math.round(rec.beatsPerMinute), t: null });
+      }
+    });
+  });
+  points.sort((a, b) => (a.t || 0) - (b.t || 0));
+  const maxPts = 60;
+  if (points.length > maxPts) {
+    const step = Math.floor(points.length / maxPts);
+    _hcHRPoints = points.filter((_, i) => i % step === 0 || i === points.length - 1);
+  } else {
+    _hcHRPoints = points;
+  }
+  if (!_hcHRPoints.length) return;
+  const latest = _hcHRPoints[_hcHRPoints.length - 1];
+  const valEl = document.getElementById('hwHRGVal');
+  const subEl = document.getElementById('hwHRGSub');
+  if (valEl) valEl.textContent = latest.bpm;
+  if (subEl) subEl.textContent = latest.t ? _hcSampleAgo(latest.t) : _hcAgo(arr[0].created_at);
+  _hcDrawHRGraph();
+  const card = document.getElementById('hw-hr-graph');
+  if (card && !card._hrObs) {
+    card._hrObs = new ResizeObserver(_hcDrawHRGraph);
+    card._hrObs.observe(card);
+  }
+}
+
+async function _hcRenderSleep() {
+  const row = await _hcFetchLatest('sleep');
+  if (!row) return;
+  const rec = _hcLastRec(row.data);
+  const start = rec.startTime, end = rec.endTime;
+  const durMs = end - start;
+  const durH = Math.floor(durMs / 3600000);
+  const durM = Math.floor((durMs % 3600000) / 60000);
+  const durStr = durH + 'h ' + durM + 'm';
+
+  const durEl = document.getElementById('hwSleepDur');
+  const timesEl = document.getElementById('hwSleepTimes');
+  const stagesEl = document.getElementById('hwSleepStages');
+  if (durEl) durEl.textContent = durStr;
+
+  if (timesEl) {
+    const fmt = ms => { const d = new Date(ms); return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); };
+    timesEl.textContent = fmt(start) + ' – ' + fmt(end);
+  }
+
+  const STAGE_NAMES = { 1: 'Awake', 4: 'Light', 5: 'Deep', 6: 'REM' };
+  const STAGE_COLORS = { 1: '#aaa', 4: '#6ab0ff', 5: '#3a6fcc', 6: '#9b59d9' };
+  if (stagesEl && rec.stages && rec.stages.length) {
+    const totals = {};
+    rec.stages.forEach(s => { totals[s.stage] = (totals[s.stage] || 0) + (s.endTime - s.startTime); });
+    const totalMs = Object.values(totals).reduce((a, b) => a + b, 0) || 1;
+    stagesEl.innerHTML = Object.entries(totals).map(([stage, ms]) => {
+      const pct = (ms / totalMs * 100).toFixed(1);
+      const m = Math.round(ms / 60000);
+      const h = Math.floor(m / 60), rm = m % 60;
+      const label = STAGE_NAMES[stage] || ('Stage ' + stage);
+      const color = STAGE_COLORS[stage] || '#888';
+      return `<div style="margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px">
+          <span style="color:${color}">${label}</span>
+          <span style="color:var(--text-secondary)">${h > 0 ? h + 'h ' : ''}${rm}m</span>
+        </div>
+        <div style="height:6px;border-radius:3px;background:var(--bg-tertiary)">
+          <div style="height:100%;border-radius:3px;width:${pct}%;background:${color}"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Update glance
+  const glS = document.getElementById('glanceSleep');
+  if (glS && glS.textContent === '—') { glS.textContent = durStr; }
+}
+
+async function _hcRenderWeight() {
+  const row = await _hcFetchLatest('weight');
+  if (!row) return;
+  const rec = _hcLastRec(row.data);
+  const kg = rec.weight ? rec.weight.kilograms : null;
+  const lbs = rec.weight ? rec.weight.pounds : null;
+  const glW = document.getElementById('glanceWeight');
+  if (glW && kg != null) glW.textContent = Math.round(lbs) + ' lbs';
+}
+
+async function _hcInitData() {
+  if (!window.supabase || !_HC_URL || !_HC_KEY) return;
+  _hcSupa = window.supabase.createClient(_HC_URL, _HC_KEY);
+  await Promise.all([
+    _hcRenderHeartRate(), _hcRenderSteps(), _hcRenderSPO2(),
+    _hcRenderHRV(), _hcRenderFloors(), _hcRenderExercise(),
+    _hcRenderBodyFat(), _hcRenderRespRate(), _hcRenderSkinTemp(),
+    _hcRenderDistance(), _hcRenderHydration(), _hcRenderBMR(),
+    _hcRenderSleep(), _hcRenderWeight(), _hcRenderWeightGraph(),
+    _hcRenderHRGraph(),
+  ]);
+}
+
+_hcInitData();
+
+// ── Health AI Summary ──
+const HEALTH_AI_KEY = 'health:ai-summary:v1';
+const HEALTH_AI_TTL = 10 * 60 * 1000;
+
+function _applyHealthAiHighlights(el, text) {
+  const nums = text.match(/\d+[\.,]?\d*\s*(oz|hrs?|hours?|cal|lbs?|kg|glasses?|%)?/gi) || [];
+  let html = text;
+  nums.slice(0,4).forEach(n => {
+    html = html.replace(n, `<span class="ai-hl">${n}</span>`);
+  });
+  el.innerHTML = html;
+}
+
+async function renderHealthAiSummary() {
+  const container = document.getElementById('healthAiSummary');
+  const textEl = document.getElementById('healthAiText');
+  if (!container || !textEl) return;
+
+  const today = new Date().toISOString().slice(0,10);
+
+  const waterData = (() => { try { return JSON.parse(localStorage.getItem('health:water:v2')) || {goal:8,logs:{}}; } catch { return {goal:8,logs:{}}; } })();
+  const sleepData = (() => { try { return JSON.parse(localStorage.getItem('health:sleep:v1')) || {logs:[]}; } catch { return {logs:[]}; } })();
+  const macroData = (() => { try { return JSON.parse(localStorage.getItem('health:macro:v1')) || {goal:2000,logs:[]}; } catch { return {goal:2000,logs:[]}; } })();
+  const weightData = (() => { try { return JSON.parse(localStorage.getItem('health:weight:v1')) || {logs:[]}; } catch { return {logs:[]}; } })();
+
+  const todayWater = Object.values(waterData.logs[today] || {}).reduce((s,v) => s+v, 0);
+  const recentSleep = sleepData.logs.slice(-7).map(l => l.hours || l.duration || 0).filter(Boolean);
+  const avgSleep = recentSleep.length ? (recentSleep.reduce((a,b)=>a+b,0)/recentSleep.length).toFixed(1) : null;
+  const todayMacroLogs = macroData.logs.filter(l => l.date === today);
+  const todayCalories = todayMacroLogs.reduce((s,l) => s+(l.calories||0), 0);
+  const recentWeight = weightData.logs.slice(-2);
+
+  const hasData = todayWater > 0 || recentSleep.length > 0 || todayCalories > 0 || recentWeight.length > 0;
+  if (!hasData) { container.style.display = 'none'; return; }
+  container.style.display = 'block';
+
+  const cacheKey = `${today}-${todayWater}-${avgSleep}-${todayCalories}`;
+  const cached = (() => { try { return JSON.parse(localStorage.getItem(HEALTH_AI_KEY)); } catch { return null; } })();
+  if (cached && cached.key === cacheKey && Date.now() - cached.ts < HEALTH_AI_TTL) {
+    _applyHealthAiHighlights(textEl, cached.text);
+    return;
+  }
+
+  if (!window.TopbarAI || !window.TopbarAI.generateSummary) {
+    const fallback = `${todayWater}/${waterData.goal} glasses water today${avgSleep ? `, avg ${avgSleep}h sleep` : ''}${todayCalories ? `, ${todayCalories} cal logged` : ''}.`;
+    _applyHealthAiHighlights(textEl, fallback);
+    return;
+  }
+
+  const weightTrend = recentWeight.length >= 2
+    ? ` Weight: ${recentWeight[0].weight}→${recentWeight[1].weight} lbs.` : '';
+  const prompt = `Health data for today (${today}):
+Water: ${todayWater} of ${waterData.goal} glasses.
+${avgSleep ? `Avg sleep (last ${recentSleep.length} nights): ${avgSleep}h.` : ''}
+${todayCalories ? `Calories today: ${todayCalories} of ${macroData.goal} goal.` : ''}${weightTrend}
+Write 1-2 sentences (max 30 words) summarizing today's health status and any key action items. No intro, just the insight.`;
+
+  try {
+    const text = await window.TopbarAI.generateSummary(prompt);
+    localStorage.setItem(HEALTH_AI_KEY, JSON.stringify({ key: cacheKey, text, ts: Date.now() }));
+    _applyHealthAiHighlights(textEl, text);
+  } catch {
+    _applyHealthAiHighlights(textEl, `${todayWater}/${waterData.goal} glasses today${avgSleep ? `, ${avgSleep}h avg sleep` : ''}.`);
+  }
+}
+
+renderHealthAiSummary();
+window.addEventListener('health-changed', renderHealthAiSummary);
+window.addEventListener('ai-settings-changed', renderHealthAiSummary);
+</script>
+</body>
+</html>
