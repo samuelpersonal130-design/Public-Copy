@@ -20,11 +20,10 @@
   const STRIP_H = 44;
   const NAV_BOTTOM = 20; // px from viewport bottom
 
-  // ─────────────────────── Portland time helpers ────────────────────────
-  function getPortlandHour() {
+  // ─────────────────────── Local time helpers ────────────────────────
+  function getLocalHour() {
     try {
       const parts = new Intl.DateTimeFormat('en-US', {
-        timeZone: 'America/Los_Angeles',
         hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false
       }).formatToParts(new Date());
       const h = parseInt(parts.find(p=>p.type==='hour').value);
@@ -35,10 +34,9 @@
       const d=new Date(); return d.getHours()+d.getMinutes()/60+d.getSeconds()/3600;
     }
   }
-  function getPortlandDate() {
+  function getLocalDate() {
     try {
       const parts = new Intl.DateTimeFormat('en-US', {
-        timeZone: 'America/Los_Angeles',
         year:'numeric',month:'numeric',day:'numeric'
       }).formatToParts(new Date());
       return {
@@ -50,16 +48,10 @@
       const d=new Date(); return {year:d.getFullYear(),month:d.getMonth()+1,day:d.getDate()};
     }
   }
-  function _isDSTPortland(year,month,day) {
-    if(month<3||month>11) return false;
-    if(month>3&&month<11) return true;
-    const fd=(m)=>new Date(year,m-1,1).getDay();
-    if(month===3){ const fs=fd(3)===0?1:8-fd(3); return day>=fs+7; }
-    const fs=fd(11)===0?1:8-fd(11); return day<fs;
-  }
-  function getPortlandSunTimes() {
-    const {year,month,day}=getPortlandDate();
-    const lat=45.5051, lon=-122.675;
+  function getLocalSunTimes() {
+    const {year,month,day}=getLocalDate();
+    const lat = _latitude  !== null ? _latitude  : 40.0;
+    const lon = _longitude !== null ? _longitude : -75.0;
     const doy=Math.floor((new Date(year,month-1,day)-new Date(year,0,0))/86400000);
     const D=doy+0.5;
     const g=(357.5291+0.98560028*D)*Math.PI/180;
@@ -75,21 +67,21 @@
     const Eo=1440*(0.000075+0.001868*Math.cos(g)-0.032077*Math.sin(g)-0.014615*Math.cos(2*g)-0.04089*Math.sin(2*g));
     const EqT=Eo/3600;
     const noonUTC=12-lon/15-EqT;
-    const utcOff=_isDSTPortland(year,month,day)?-7:-8;
+    const utcOff = -(new Date().getTimezoneOffset() / 60);
     return {rise:noonUTC-H/15+utcOff, set:noonUTC+H/15+utcOff};
   }
-  // Map Portland local time to SKY_STOPS coordinate (where 6=sunrise, 18=sunset)
+  // Map local time to SKY_STOPS coordinate (where 6=sunrise, 18=sunset)
   function _pHrToStop(phr,sun) {
     const {rise,set}=sun;
     if(phr<=rise) return phr*6/Math.max(rise,0.5);
     if(phr>=set)  return 18+(phr-set)*6/Math.max(24-set,0.5);
     return 6+(phr-rise)/Math.max(set-rise,1)*12;
   }
-  // Format Portland clock time
-  function fmtPortlandClock() {
+  // Format local clock time
+  function fmtLocalClock() {
     try {
       return new Intl.DateTimeFormat('en-US',{
-        timeZone:'America/Los_Angeles',hour:'numeric',minute:'2-digit',hour12:true
+        hour:'numeric',minute:'2-digit',hour12:true
       }).format(new Date());
     } catch(e) {
       const d=new Date(); let h=d.getHours(); const m=String(d.getMinutes()).padStart(2,'0'),ap=h>=12?'PM':'AM'; h=h%12||12; return h+':'+m+' '+ap;
@@ -1650,6 +1642,18 @@ body.stheme-accent .ctx-stab.active {
     </div>
   </div>
 
+  <!-- ── Location & Time ── -->
+  <div class="tsp-group" id="tspg-location">
+    <button class="tsp-group-head"><span><span class="tsp-group-icon">📍</span> Location &amp; Time</span><span class="tsp-group-arrow">›</span></button>
+    <div class="tsp-group-body">
+      <div style="font-size:9.5px;color:rgba(255,255,255,.3);margin-bottom:8px;line-height:1.5">Used to calculate accurate sunrise/sunset for the sky theme. Leave blank to use a generic day/night cycle. Stored locally only — never shared.</div>
+      <div class="tsp-head">Latitude</div>
+      <input type="number" class="tsp-input" id="tsp-latitude" placeholder="e.g. 40.71" step="0.01" min="-90" max="90" style="max-width:160px">
+      <div class="tsp-head" style="margin-top:8px">Longitude</div>
+      <input type="number" class="tsp-input" id="tsp-longitude" placeholder="e.g. -74.01" step="0.01" min="-180" max="180" style="max-width:160px">
+    </div>
+  </div>
+
   <!-- ── Media & Spotify ── -->
   <div class="tsp-group" id="tspg-spotify">
     <button class="tsp-group-head"><span><span class="tsp-group-icon">🎧</span> Media &amp; Spotify</span><span class="tsp-group-arrow">›</span></button>
@@ -1987,7 +1991,7 @@ body.stheme-accent .ctx-stab.active {
   function _rgb(c){return 'rgb('+Math.round(c[0])+','+Math.round(c[1])+','+Math.round(c[2])+')'}
 
   function updateSky() {
-    const _sunTimes = getPortlandSunTimes();
+    const _sunTimes = getLocalSunTimes();
     const _pHr = _getSimHour();
     const hr = _pHrToStop(_pHr, _sunTimes);
     let lo=SKY_STOPS[0],hi=SKY_STOPS[1];
@@ -2009,10 +2013,10 @@ body.stheme-accent .ctx-stab.active {
     let glowX=50, glowY=78;
     if(isSunUp){const p=(hr-6)/12; glowX=Math.round(8+p*84); glowY=Math.round(90-Math.sin(p*Math.PI)*68);}
 
-    // Expose Portland sunrise/set as CSS vars for other pages
-    document.documentElement.style.setProperty('--portland-sunrise', _sunTimes.rise.toFixed(2));
-    document.documentElement.style.setProperty('--portland-sunset', _sunTimes.set.toFixed(2));
-    document.documentElement.style.setProperty('--portland-hr', _pHr.toFixed(3));
+    // Expose local sunrise/set as CSS vars for other pages
+    document.documentElement.style.setProperty('--sky-sunrise', _sunTimes.rise.toFixed(2));
+    document.documentElement.style.setProperty('--sky-sunset', _sunTimes.set.toFixed(2));
+    document.documentElement.style.setProperty('--sky-hr', _pHr.toFixed(3));
 
     // Body gradient + fixed #topbar-bg for full-viewport gradient coverage
     const grad = 'linear-gradient(185deg,'+_rgb(gt)+' 0%,'+_rgb(gm)+' 52%,'+_rgb(gb)+' 100%)';
@@ -2235,7 +2239,7 @@ body.stheme-accent .ctx-stab.active {
 
   function _buildStrip() {
     const items=[], hr=_getSimHour();
-    const sun=getPortlandSunTimes();
+    const sun=getLocalSunTimes();
     const bar=_barSettings;
 
     const _si=(s,n=14)=>`<img class="ui-icon" src="${s}" alt="" style="width:${n}px;height:${n}px">`;
@@ -2246,7 +2250,7 @@ body.stheme-accent .ctx-stab.active {
       [sun.set,sun.set+1.5,_si('themes/icons/icons8-moon-50.png'),'Evening'],[sun.set+1.5,24,_si('themes/icons/icons8-moon-50.png'),'Night']
     ];
     const ph=phases.find(([s,e])=>hr>=s&&hr<e)||phases[0];
-    items.push({icon:ph[2], label:'Now', text:ph[3]+' · '+fmtPortlandClock(), pct:null});
+    items.push({icon:ph[2], label:'Now', text:ph[3]+' · '+fmtLocalClock(), pct:null});
 
     // Day progress
     const WAKE=sun.rise, SLEEP=sun.set;
@@ -2405,6 +2409,8 @@ body.stheme-accent .ctx-stab.active {
   let _supabaseUrl = '';
   let _supabaseKey = '';
   let _spotifyClientId = '';
+  let _latitude  = null;
+  let _longitude = null;
   let _tabBackgrounds = {}; // { pageKey: { mode, blur, glass } }
   let _tabBgSelected  = 'home'; // which tab is being edited in settings
   // AI wallpaper state
@@ -2430,7 +2436,7 @@ body.stheme-accent .ctx-stab.active {
     if (_themeMode === 'light') return 10;
     if (_themeMode === 'dark')  return 1;
     if (_simTime !== null)      return _simTime;
-    return getPortlandHour();
+    return getLocalHour();
   }
 
   function _initSettings() {
@@ -2446,6 +2452,8 @@ body.stheme-accent .ctx-stab.active {
       _supabaseUrl        = saved.supabaseUrl || '';
       _supabaseKey        = saved.supabaseKey || '';
       _spotifyClientId    = saved.spotifyClientId || '';
+      _latitude           = saved.latitude  !== undefined && saved.latitude  !== null && saved.latitude  !== '' ? parseFloat(saved.latitude)  : null;
+      _longitude          = saved.longitude !== undefined && saved.longitude !== null && saved.longitude !== '' ? parseFloat(saved.longitude) : null;
       _tabBackgrounds     = saved.tabBackgrounds || {};
       _geminiEnabled      = !!saved.geminiEnabled;
       _openaiApiKey       = saved.openaiApiKey || saved.geminiApiKey || '';
@@ -2504,6 +2512,8 @@ body.stheme-accent .ctx-stab.active {
         supabaseUrl: _supabaseUrl,
         supabaseKey: _supabaseKey,
         spotifyClientId: _spotifyClientId,
+        latitude: _latitude,
+        longitude: _longitude,
       }));
       // Also write as dedicated keys so inline page scripts can read them before topbar.js runs
       localStorage.setItem('topbar:supabaseUrl', _supabaseUrl);
@@ -2574,6 +2584,10 @@ body.stheme-accent .ctx-stab.active {
     });
     const ageInput = document.getElementById('tsp-age-input');
     if (ageInput && ageInput !== document.activeElement) ageInput.value = _userAge !== null ? _userAge : '';
+    const latEl = document.getElementById('tsp-latitude');
+    if (latEl && latEl !== document.activeElement) latEl.value = _latitude !== null ? _latitude : '';
+    const lonEl = document.getElementById('tsp-longitude');
+    if (lonEl && lonEl !== document.activeElement) lonEl.value = _longitude !== null ? _longitude : '';
     const supaUrlEl = document.getElementById('tsp-supa-url');
     if (supaUrlEl && supaUrlEl !== document.activeElement) supaUrlEl.value = _supabaseUrl;
     const supaKeyEl = document.getElementById('tsp-supa-key');
@@ -2997,7 +3011,7 @@ body.stheme-accent .ctx-stab.active {
 
   // ── Gemini wallpaper time-phase detection ──────────────────────
   function _getWallpaperPhase(hr) {
-    const sun = getPortlandSunTimes();
+    const sun = getLocalSunTimes();
     const stopHr = _pHrToStop(hr, sun);
     if (stopHr >= 5  && stopHr < 7.5)  return 'sunrise';
     if (stopHr >= 7.5 && stopHr < 16)  return 'day';
@@ -3560,6 +3574,18 @@ body.stheme-accent .ctx-stab.active {
         _saveSettings();
         _saveAgeToDB(_userAge);
       });
+    }
+
+    // Location
+    const latEl = document.getElementById('tsp-latitude');
+    if (latEl) {
+      latEl.addEventListener('input',  () => { const v = parseFloat(latEl.value); _latitude  = isNaN(v) ? null : v; });
+      latEl.addEventListener('change', () => { _saveSettings(); updateSky(); });
+    }
+    const lonEl = document.getElementById('tsp-longitude');
+    if (lonEl) {
+      lonEl.addEventListener('input',  () => { const v = parseFloat(lonEl.value); _longitude = isNaN(v) ? null : v; });
+      lonEl.addEventListener('change', () => { _saveSettings(); updateSky(); });
     }
 
     // Supabase credentials

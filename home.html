@@ -1256,22 +1256,22 @@ body{
 <script>
 const RING_C=2*Math.PI*52;
 
-function getPortlandHour(){
+function getLocalHour(){
   try{
-    const parts=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',hour:'numeric',minute:'numeric',second:'numeric',hour12:false}).formatToParts(new Date());
+    const parts=new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'numeric',second:'numeric',hour12:false}).formatToParts(new Date());
     const h=parseInt(parts.find(p=>p.type==='hour').value),m=parseInt(parts.find(p=>p.type==='minute').value),s=parseInt(parts.find(p=>p.type==='second').value)||0;
     return(h===24?0:h)+m/60+s/3600;
   }catch(e){const d=new Date();return d.getHours()+d.getMinutes()/60+d.getSeconds()/3600;}
 }
-function getPortlandClock(){
-  try{return new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',hour:'numeric',minute:'2-digit',hour12:true}).format(new Date());}
+function getLocalClock(){
+  try{return new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit',hour12:true}).format(new Date());}
   catch(e){const d=new Date();let h=d.getHours();const m=String(d.getMinutes()).padStart(2,'0'),ap=h>=12?'PM':'AM';h=h%12||12;return h+':'+m+' '+ap;}
 }
 function activeDateKey(){
   try{
-    const p=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+    const p=new Intl.DateTimeFormat('en-US',{year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
     const y=p.find(x=>x.type==='year').value,mo=p.find(x=>x.type==='month').value,d=p.find(x=>x.type==='day').value;
-    const hr=getPortlandHour();
+    const hr=getLocalHour();
     if(hr<6){const dt=new Date(y+'-'+mo+'-'+d+'T12:00:00');dt.setDate(dt.getDate()-1);return dt.toISOString().slice(0,10);}
     return y+'-'+mo+'-'+d;
   }catch(e){const now=new Date(),d=new Date(now);if(now.getHours()<6)d.setDate(d.getDate()-1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -1325,14 +1325,14 @@ function gradeColor(pct){
 
 // ── Day ring ──
 function updateRing(){
-  const hours=getPortlandHour();
+  const hours=getLocalHour();
   const fill=document.getElementById('heroFill');
   fill.style.strokeDasharray=RING_C;
-  document.getElementById('heroClock').textContent=getPortlandClock();
+  document.getElementById('heroClock').textContent=getLocalClock();
 
-  // Use actual Portland sunrise/sunset from CSS vars (set by topbar.js) or approximate
-  const WAKE=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--portland-sunrise'))||5.5;
-  const SLEEP=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--portland-sunset'))||20.5;
+  // Use sunrise/sunset from CSS vars (set by topbar.js) or fallback
+  const WAKE=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sky-sunrise'))||5.5;
+  const SLEEP=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sky-sunset'))||20.5;
 
   if(hours<WAKE){
     fill.style.strokeDashoffset=RING_C;fill.style.stroke='rgba(100,95,128,0.6)';
@@ -1368,7 +1368,7 @@ function updateRing(){
     document.getElementById('heroRemaining').textContent=fmtHM((SLEEP-hours)*60)+' of daylight left';
   }
 
-  // Quick stats (Portland date key)
+  // Quick stats
   let goals=[]; try{goals=JSON.parse(localStorage.getItem('goals:'+activeDateKey()))||[];}catch{}
   const gDone=goals.filter(g=>g.done).length;
   document.getElementById('statGoals').textContent=goals.length?gDone+'/'+goals.length:'–';
@@ -1881,9 +1881,9 @@ function renderSpotify(){
 
 // ── AI Day Summary ──
 async function buildAppState(){
-  const hours=getPortlandHour();
-  const wakeH=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--portland-sunrise'))||5.5;
-  const sleepH=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--portland-sunset'))||20.5;
+  const hours=getLocalHour();
+  const wakeH=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sky-sunrise'))||5.5;
+  const sleepH=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sky-sunset'))||20.5;
   const dayPct=hours<=wakeH?0:hours>=sleepH?100:Math.round((hours-wakeH)/(sleepH-wakeH)*100);
   let goals=[];try{goals=JSON.parse(localStorage.getItem('goals:'+activeDateKey()))||[];}catch{}
   const goalsDone=goals.filter(g=>g.done).length,goalsTotal=goals.length;
@@ -2743,7 +2743,7 @@ function _waterGetData(){
   return d||{goal:8,logs:{}};
 }
 function _waterToday(){
-  const p=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+  const p=new Intl.DateTimeFormat('en-US',{year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
   const y=p.find(x=>x.type==='year').value,m=p.find(x=>x.type==='month').value,dd=p.find(x=>x.type==='day').value;
   return y+'-'+m+'-'+dd;
 }
