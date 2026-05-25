@@ -1,0 +1,394 @@
+<!--
+=====================================================
+© 2026 SamG° & Rowan Thistlebrooke — All Rights Reserved
+
+Personal & Educational Use Only.
+You may view and run this code locally for learning.
+You may NOT use this code or data in a commercial
+product, redistribute it, or republish it as your own.
+
+Unauthorized use may be subject to copyright enforcement.
+=====================================================
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Focus — Status</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="spotify.js"></script>
+<script src="topbar.js" defer></script>
+<style>
+:root{--font-body:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif;--font-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+body{padding:0!important;margin:0;font-family:var(--font-body);-webkit-font-smoothing:antialiased}
+
+/* ── Full-screen blur backdrop ── */
+#st-blur{
+  position:fixed;inset:0;z-index:1;pointer-events:none;
+  backdrop-filter:blur(72px) saturate(1.3);
+  -webkit-backdrop-filter:blur(72px) saturate(1.3);
+  background:rgba(5,5,8,.62);
+}
+
+/* ── Main layout ── */
+#st-wrap{
+  position:fixed;inset:0;z-index:2;
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  grid-template-rows:1fr;
+  gap:20px;
+  padding:70px 24px 100px;
+  overflow-y:auto;
+  scrollbar-width:none;
+}
+#st-wrap::-webkit-scrollbar{display:none}
+@media(max-width:900px){#st-wrap{grid-template-columns:1fr;padding:68px 16px 110px}}
+@media(max-width:600px){#st-wrap{gap:14px}}
+
+/* ── Cards ── */
+.st-card{
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:24px;
+  padding:28px 26px;
+  backdrop-filter:blur(28px) saturate(1.35);
+  -webkit-backdrop-filter:blur(28px) saturate(1.35);
+  box-shadow:0 8px 40px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.07);
+  display:flex;flex-direction:column;gap:0;overflow:hidden;
+  min-height:0;
+}
+.st-card-label{font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.38);margin-bottom:16px}
+
+/* ── Left column: Clock + Schedule ── */
+#st-left{display:flex;flex-direction:column;gap:16px}
+.st-clock-card{flex-shrink:0}
+.st-time{font-family:var(--font-mono);font-size:clamp(42px,5vw,68px);font-weight:800;color:#FAFAFA;letter-spacing:-.04em;line-height:1;margin-bottom:4px}
+.st-date{font-size:13px;font-weight:600;color:rgba(255,255,255,.45);letter-spacing:.01em}
+.st-sched-card{flex:1;min-height:0}
+.st-sched-list{display:flex;flex-direction:column;gap:10px;overflow-y:auto;max-height:calc(100% - 32px);scrollbar-width:none}
+.st-sched-list::-webkit-scrollbar{display:none}
+.st-sched-item{display:flex;align-items:flex-start;gap:10px}
+.st-sched-dot{width:3px;flex-shrink:0;border-radius:2px;margin-top:4px;align-self:stretch;min-height:32px}
+.st-sched-info{}
+.st-sched-title{font-size:13px;font-weight:700;color:var(--text-primary,#FAFAFA);line-height:1.3;margin-bottom:3px}
+.st-sched-meta{font-size:10.5px;color:rgba(255,255,255,.38);font-weight:600}
+.st-sched-empty{font-size:12px;color:rgba(255,255,255,.28);font-style:italic;padding:8px 0}
+
+/* ── Center column: Now Playing ── */
+#st-center{}
+.st-np-card{height:100%;justify-content:space-between}
+.st-np-art{width:min(200px,60%);aspect-ratio:1/1;border-radius:16px;overflow:hidden;margin:0 auto 20px;box-shadow:0 24px 72px rgba(0,0,0,.7);flex-shrink:0}
+.st-np-art img{width:100%;height:100%;object-fit:cover;display:block}
+.st-np-art-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.06);font-size:48px}
+.st-np-info{text-align:center;flex:1;min-height:0;margin-bottom:16px}
+.st-np-title{font-size:17px;font-weight:800;color:#FAFAFA;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.015em;margin-bottom:4px}
+.st-np-artist{font-size:12.5px;color:rgba(255,255,255,.48);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-np-prog-wrap{margin:12px 0 8px}
+.st-np-scrub{width:100%;height:3px;background:rgba(255,255,255,.15);border-radius:2px;overflow:hidden;margin-bottom:5px}
+.st-np-fill{height:100%;background:rgba(255,255,255,.85);border-radius:2px;transition:width .6s linear}
+.st-np-times{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:9px;color:rgba(255,255,255,.28)}
+.st-np-ctrls{display:flex;align-items:center;justify-content:center;gap:4px}
+.st-np-btn{background:none;border:none;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;padding:0;transition:opacity .14s,transform .11s;-webkit-tap-highlight-color:transparent}
+.st-np-btn:active{transform:scale(.87)}
+.st-np-skip{width:44px;height:44px;font-size:22px;opacity:.52}
+.st-np-skip:hover{opacity:.9}
+.st-np-play{width:58px;height:58px;font-size:24px;background:rgba(255,255,255,.95);border-radius:50%;color:rgba(0,0,0,.82);box-shadow:0 6px 28px rgba(0,0,0,.48);margin:0 10px}
+.st-np-play:hover{background:#fff}
+.st-np-idle{text-align:center;padding:24px 0;color:rgba(255,255,255,.3);font-size:12px;font-style:italic}
+.st-np-idle a{color:rgba(125,211,252,.55);text-decoration:none}
+.st-np-idle a:hover{color:#7DD3FC}
+
+/* ── Right column: Pomodoro ── */
+#st-right{}
+.st-pomo-card{height:100%;align-items:center;text-align:center}
+.st-pomo-mode{font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;padding:4px 12px;border-radius:999px;border:1px solid;margin-bottom:20px;display:inline-block}
+.st-pomo-mode.work{background:rgba(125,211,252,.1);border-color:rgba(125,211,252,.28);color:#7DD3FC}
+.st-pomo-mode.break{background:rgba(107,227,164,.1);border-color:rgba(107,227,164,.28);color:#6BE3A4}
+.st-pomo-ring-wrap{position:relative;width:180px;height:180px;flex-shrink:0}
+.st-pomo-ring-wrap svg{transform:rotate(-90deg)}
+.st-pomo-ring-bg{fill:none;stroke:rgba(255,255,255,.08);stroke-width:10}
+.st-pomo-ring-fg{fill:none;stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset .8s cubic-bezier(.22,1,.36,1),stroke 1s ease}
+.st-pomo-ring-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.st-pomo-time{font-family:var(--font-mono);font-size:34px;font-weight:800;color:#FAFAFA;letter-spacing:-.04em;line-height:1}
+.st-pomo-sess{font-size:9px;font-weight:700;color:rgba(255,255,255,.35);letter-spacing:.1em;text-transform:uppercase;margin-top:3px}
+.st-pomo-ctrls{display:flex;align-items:center;gap:10px;margin-top:20px}
+.st-pomo-btn{padding:9px 18px;border-radius:10px;border:1px solid;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;letter-spacing:.03em}
+.st-pomo-btn-start{background:rgba(125,211,252,.12);border-color:rgba(125,211,252,.3);color:#7DD3FC}
+.st-pomo-btn-start:hover{background:rgba(125,211,252,.22)}
+.st-pomo-btn-start.paused{background:rgba(107,227,164,.12);border-color:rgba(107,227,164,.3);color:#6BE3A4}
+.st-pomo-btn-start.paused:hover{background:rgba(107,227,164,.22)}
+.st-pomo-btn-skip{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1);color:rgba(255,255,255,.45)}
+.st-pomo-btn-skip:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7)}
+.st-pomo-btn-reset{background:none;border-color:rgba(248,113,113,.2);color:rgba(248,113,113,.45)}
+.st-pomo-btn-reset:hover{background:rgba(248,113,113,.08);color:rgba(248,113,113,.7)}
+.st-pomo-dur{display:flex;align-items:center;gap:6px;margin-top:16px}
+.st-pomo-dur-lbl{font-size:9px;font-weight:700;color:rgba(255,255,255,.3);letter-spacing:.1em;text-transform:uppercase;flex-shrink:0}
+.st-pomo-dur-btn{padding:4px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:rgba(255,255,255,.35);font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .14s}
+.st-pomo-dur-btn.active{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.18);color:rgba(255,255,255,.82)}
+.st-pomo-dur-btn:hover:not(.active){background:rgba(255,255,255,.08);color:rgba(255,255,255,.55)}
+.st-pomo-sessions{display:flex;gap:5px;margin-top:14px;flex-wrap:wrap;justify-content:center}
+.st-pomo-sess-dot{width:8px;height:8px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);transition:background .3s,border-color .3s}
+.st-pomo-sess-dot.done{background:rgba(125,211,252,.55);border-color:rgba(125,211,252,.5)}
+
+/* ── Mobile stacking ── */
+@media(max-width:900px){
+  #st-left,#st-center,#st-right{width:100%}
+  .st-sched-card{min-height:180px}
+  .st-np-art{width:min(160px,50%)}
+  .st-pomo-ring-wrap{width:150px;height:150px}
+  .st-pomo-time{font-size:28px}
+}
+</style>
+</head>
+<body>
+<div id="st-blur"></div>
+
+<div id="st-wrap">
+  <!-- Left: Clock + Schedule -->
+  <div id="st-left">
+    <div class="st-card st-clock-card">
+      <div class="st-card-label">Now</div>
+      <div class="st-time" id="stClock">--:--</div>
+      <div class="st-date" id="stDate"></div>
+    </div>
+    <div class="st-card st-sched-card" style="flex:1">
+      <div class="st-card-label">Today's Schedule</div>
+      <div class="st-sched-list" id="stSchedList"></div>
+    </div>
+  </div>
+
+  <!-- Center: Now Playing -->
+  <div id="st-center">
+    <div class="st-card st-np-card">
+      <div class="st-card-label">Now Playing</div>
+      <div class="st-np-art" id="stNpArt">
+        <div class="st-np-art-ph">♪</div>
+      </div>
+      <div class="st-np-info">
+        <div class="st-np-title" id="stNpTitle">Not Playing</div>
+        <div class="st-np-artist" id="stNpArtist">—</div>
+      </div>
+      <div class="st-np-prog-wrap" id="stNpProgWrap" style="display:none">
+        <div class="st-np-scrub"><div class="st-np-fill" id="stNpFill" style="width:0%"></div></div>
+        <div class="st-np-times"><span id="stNpPos">0:00</span><span id="stNpDur">0:00</span></div>
+      </div>
+      <div class="st-np-ctrls" id="stNpCtrls">
+        <button class="st-np-btn st-np-skip" onclick="window.SpotifyAPI&&SpotifyAPI.prev()" title="Previous">⏮</button>
+        <button class="st-np-btn st-np-play" id="stNpPlay" onclick="window.SpotifyAPI&&SpotifyAPI.togglePlay()">▶</button>
+        <button class="st-np-btn st-np-skip" onclick="window.SpotifyAPI&&SpotifyAPI.next()" title="Next">⏭</button>
+      </div>
+      <div id="stNpIdle" class="st-np-idle" style="display:none">
+        No track playing.<br>
+        <a href="home.html">Go to Dashboard →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Pomodoro -->
+  <div id="st-right">
+    <div class="st-card st-pomo-card">
+      <div class="st-card-label">Focus Timer</div>
+      <div class="st-pomo-mode work" id="stPomoMode">Work</div>
+
+      <div class="st-pomo-ring-wrap" id="stPomoRingWrap">
+        <svg width="180" height="180" viewBox="0 0 180 180">
+          <circle class="st-pomo-ring-bg" cx="90" cy="90" r="82"/>
+          <circle class="st-pomo-ring-fg" id="stPomoRingFg" cx="90" cy="90" r="82"
+            stroke="#7DD3FC"
+            stroke-dasharray="515.22"
+            stroke-dashoffset="0"/>
+        </svg>
+        <div class="st-pomo-ring-text">
+          <div class="st-pomo-time" id="stPomoTime">25:00</div>
+          <div class="st-pomo-sess" id="stPomoSessLbl">Session 1</div>
+        </div>
+      </div>
+
+      <div class="st-pomo-ctrls">
+        <button class="st-pomo-btn st-pomo-btn-start" id="stPomoStartBtn" onclick="stPomoToggle()">Start</button>
+        <button class="st-pomo-btn st-pomo-btn-skip" onclick="stPomoSkip()">Skip →</button>
+        <button class="st-pomo-btn st-pomo-btn-reset" onclick="stPomoReset()">Reset</button>
+      </div>
+
+      <div class="st-pomo-dur">
+        <span class="st-pomo-dur-lbl">Work</span>
+        <button class="st-pomo-dur-btn" onclick="stPomoSetWork(15,this)">15m</button>
+        <button class="st-pomo-dur-btn active" onclick="stPomoSetWork(25,this)">25m</button>
+        <button class="st-pomo-dur-btn" onclick="stPomoSetWork(45,this)">45m</button>
+      </div>
+
+      <div class="st-pomo-sessions" id="stPomoSessions">
+        <div class="st-pomo-sess-dot" id="stPomoDot0"></div>
+        <div class="st-pomo-sess-dot" id="stPomoDot1"></div>
+        <div class="st-pomo-sess-dot" id="stPomoDot2"></div>
+        <div class="st-pomo-sess-dot" id="stPomoDot3"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Clock ──
+function _stFmtTime(d){
+  let h=d.getHours(),m=d.getMinutes(),ap=h>=12?'PM':'AM';
+  h=h%12||12;
+  return h+':'+(m<10?'0':'')+m+' '+ap;
+}
+function _stFmtDate(d){
+  const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return days[d.getDay()]+', '+months[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();
+}
+function _stTickClock(){
+  const now=new Date();
+  const cl=document.getElementById('stClock');
+  const dt=document.getElementById('stDate');
+  if(cl)cl.textContent=_stFmtTime(now);
+  if(dt)dt.textContent=_stFmtDate(now);
+}
+_stTickClock();setInterval(_stTickClock,1000);
+
+// ── Schedule ──
+function _stLoadSchedule(){
+  const el=document.getElementById('stSchedList');if(!el)return;
+  let evts=[];
+  try{const raw=localStorage.getItem('schedule:events:v1');if(raw)evts=JSON.parse(raw);}catch{}
+  const today=new Date().toISOString().slice(0,10);
+  const todayEvts=evts.filter(e=>e.date===today&&!e._recurrence).sort((a,b)=>{
+    const ta=a.start_time||'00:00',tb=b.start_time||'00:00';
+    return ta<tb?-1:ta>tb?1:0;
+  });
+  const CAT_COLORS={health:'#6BE3A4',academic:'#F2C063',goals:'#7DD3FC',finance:'#FB923C',work:'#A78BFA',personal:'#F87171',other:'rgba(255,255,255,.3)'};
+  if(!todayEvts.length){
+    el.innerHTML='<div class="st-sched-empty">No events scheduled for today.</div>';return;
+  }
+  el.innerHTML=todayEvts.map(e=>{
+    const col=CAT_COLORS[e.category]||CAT_COLORS.other;
+    const timeStr=e.all_day?'All day':(e.start_time?_stFmtT(e.start_time):'')+
+      (e.end_time?' – '+_stFmtT(e.end_time):'');
+    return`<div class="st-sched-item">
+      <div class="st-sched-dot" style="background:${col}"></div>
+      <div class="st-sched-info">
+        <div class="st-sched-title">${e.title.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>
+        ${timeStr?`<div class="st-sched-meta">${timeStr}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function _stFmtT(t){
+  if(!t)return'';const[h,m]=t.split(':').map(Number);
+  const ap=h>=12?'PM':'AM';return(h%12||12)+':'+(m<10?'0':'')+m+' '+ap;
+}
+_stLoadSchedule();
+
+// ── Spotify ──
+function _stUpdateNP(track){
+  const artEl=document.getElementById('stNpArt');
+  const titleEl=document.getElementById('stNpTitle');
+  const artistEl=document.getElementById('stNpArtist');
+  const progWrap=document.getElementById('stNpProgWrap');
+  const fill=document.getElementById('stNpFill');
+  const posEl=document.getElementById('stNpPos');
+  const durEl=document.getElementById('stNpDur');
+  const playBtn=document.getElementById('stNpPlay');
+  const idle=document.getElementById('stNpIdle');
+  const ctrls=document.getElementById('stNpCtrls');
+  if(!track){
+    if(titleEl)titleEl.textContent='Not Playing';
+    if(artistEl)artistEl.textContent='—';
+    if(artEl)artEl.innerHTML='<div class="st-np-art-ph">♪</div>';
+    if(progWrap)progWrap.style.display='none';
+    if(idle)idle.style.display='block';
+    if(ctrls)ctrls.style.opacity='.4';
+    return;
+  }
+  if(idle)idle.style.display='none';
+  if(ctrls)ctrls.style.opacity='1';
+  if(titleEl)titleEl.textContent=track.name||'Unknown';
+  if(artistEl)artistEl.textContent=track.artist||'—';
+  if(artEl){
+    if(track.art)artEl.innerHTML=`<img src="${track.art}" alt="">`;
+    else artEl.innerHTML='<div class="st-np-art-ph">♪</div>';
+  }
+  if(playBtn)playBtn.textContent=track.isPlaying?'⏸':'▶';
+  if(track.progressMs!=null&&track.durationMs){
+    if(progWrap)progWrap.style.display='block';
+    const pct=Math.min(100,track.progressMs/track.durationMs*100);
+    if(fill)fill.style.width=pct+'%';
+    if(posEl)posEl.textContent=_stFmtMs(track.progressMs);
+    if(durEl)durEl.textContent=_stFmtMs(track.durationMs);
+  }
+}
+function _stFmtMs(ms){const s=Math.floor(ms/1000);return Math.floor(s/60)+':'+(s%60<10?'0':'')+(s%60);}
+
+window.addEventListener('spotify-updated',e=>_stUpdateNP(e.detail));
+if(window.SpotifyAPI){
+  window.SpotifyAPI.startPolling(8000);
+  const t=window.SpotifyAPI.getCurrentTrack();
+  if(t)_stUpdateNP(t);
+}
+
+// ── Pomodoro ──
+const POMO_CIRC=2*Math.PI*82; // r=82
+let _poWork=25,_poBreakS=5,_poBreakL=15;
+let _poSess=0,_poIsWork=true,_poRunning=false,_poTimer=null;
+let _poRem=_poWork*60;
+
+function stPomoSetWork(min,btn){
+  _poWork=min;stPomoReset();
+  document.querySelectorAll('.st-pomo-dur-btn').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+}
+function _stPomoBreakMins(){return(_poSess+1)%4===0?_poBreakL:_poBreakS;}
+function _stPomoTotalSecs(){return(_poIsWork?_poWork:_stPomoBreakMins())*60;}
+function _stPomoFmt(s){const m=Math.floor(s/60);return m+':'+(s%60<10?'0':'')+(s%60);}
+function _stPomoUpdate(){
+  const timeEl=document.getElementById('stPomoTime');
+  const modEl=document.getElementById('stPomoMode');
+  const sessEl=document.getElementById('stPomoSessLbl');
+  const fg=document.getElementById('stPomoRingFg');
+  const startBtn=document.getElementById('stPomoStartBtn');
+  if(timeEl)timeEl.textContent=_stPomoFmt(_poRem);
+  if(modEl){modEl.textContent=_poIsWork?'Work':(_poSess+1)%4===0?'Long Break':'Short Break';modEl.className='st-pomo-mode '+(_poIsWork?'work':'break');}
+  if(sessEl)sessEl.textContent='Session '+(Math.floor(_poSess/2)+1);
+  if(fg){const total=_stPomoTotalSecs();const offset=POMO_CIRC*(1-_poRem/total);fg.style.strokeDashoffset=offset;fg.style.stroke=_poIsWork?'#7DD3FC':'#6BE3A4';}
+  if(startBtn){startBtn.textContent=_poRunning?'Pause':'Start';startBtn.classList.toggle('paused',_poRunning);}
+  // Update session dots
+  for(let i=0;i<4;i++){const d=document.getElementById('stPomoDot'+i);if(d)d.classList.toggle('done',i<_poSess);}
+}
+function stPomoToggle(){
+  if(_poRunning){clearInterval(_poTimer);_poTimer=null;_poRunning=false;}
+  else{
+    _poRunning=true;
+    _poTimer=setInterval(()=>{
+      _poRem--;
+      if(_poRem<=0){
+        _poIsWork=!_poIsWork;
+        if(_poIsWork)_poSess=(_poSess+1)%4;
+        _poRem=_stPomoTotalSecs();
+        try{new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU'+Array(4).join('AA')).play();}catch{}
+      }
+      _stPomoUpdate();
+    },1000);
+  }
+  _stPomoUpdate();
+}
+function stPomoSkip(){
+  clearInterval(_poTimer);_poTimer=null;_poRunning=false;
+  _poIsWork=!_poIsWork;
+  if(_poIsWork)_poSess=(_poSess+1)%4;
+  _poRem=_stPomoTotalSecs();
+  _stPomoUpdate();
+}
+function stPomoReset(){
+  clearInterval(_poTimer);_poTimer=null;_poRunning=false;
+  _poIsWork=true;_poRem=_poWork*60;
+  _stPomoUpdate();
+}
+_stPomoUpdate();
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!--
+=====================================================
+© 2026 SamG° & Rowan Thistlebrooke — All Rights Reserved
+
+Personal & Educational Use Only.
+You may view and run this code locally for learning.
+You may NOT use this code or data in a commercial
+product, redistribute it, or republish it as your own.
+
+Unauthorized use may be subject to copyright enforcement.
+=====================================================
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Settings</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{background:var(--body-bg,#050506);color:var(--text-primary,#FAFAFA);font-family:var(--font-body,-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif);padding:0 0 100px;transition:background 6s ease,color 6s ease}
+.settings-wrap{max-width:540px;margin:0 auto;padding:24px 16px 0;position:relative;z-index:1}
+.settings-page-title{font-size:28px;font-weight:800;letter-spacing:-.025em;margin-bottom:5px;background:linear-gradient(155deg,var(--text-primary,#fff) 0%,var(--text-secondary,#aaa) 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.settings-page-sub{font-size:13px;color:var(--text-tertiary,rgba(255,255,255,.4));margin-bottom:24px}
+</style>
+<script src="topbar.js" defer></script>
+</head>
+<body>
+<div class="settings-wrap">
+  <h1 class="settings-page-title">Settings</h1>
+  <p class="settings-page-sub">Appearance, AI, media, and more.</p>
+
+  <div id="settings-page-content">
+    <!-- injected by topbar.js -->
+  </div><!-- #settings-page-content -->
+</div><!-- .settings-wrap -->
+</body>
+</html>
