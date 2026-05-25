@@ -1,0 +1,992 @@
+<!--
+=====================================================
+© 2026 SamG° & Rowan Thistlebrooke — All Rights Reserved
+
+Personal & Educational Use Only.
+You may view and run this code locally for learning.
+You may NOT use this code or data in a commercial
+product, redistribute it, or republish it as your own.
+
+Unauthorized use may be subject to copyright enforcement.
+=====================================================
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Schedule</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{background:var(--body-bg,#050506);color:var(--text-primary,#FAFAFA);font-family:var(--font-body,-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif);padding:0 0 130px;transition:background 6s ease,color 6s ease}
+
+/* ── Layout ── */
+.sc-wrap{max-width:1100px;margin:0 auto;padding:24px 16px 0;position:relative;z-index:1}
+.sc-title-row{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.sc-title{font-size:28px;font-weight:800;letter-spacing:-.025em;background:linear-gradient(155deg,var(--text-primary,#fff) 0%,var(--text-secondary,rgba(255,255,255,.5)) 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;flex-shrink:0}
+.sc-view-tabs{display:flex;gap:3px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:3px}
+.sc-view-tab{padding:5px 14px;border-radius:9px;border:none;background:none;color:rgba(255,255,255,.4);font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .14s;white-space:nowrap}
+.sc-view-tab.active{background:rgba(255,255,255,.1);color:var(--text-primary,#FAFAFA)}
+.sc-add-btn{padding:7px 16px;background:rgba(107,227,164,.11);border:1px solid rgba(107,227,164,.25);border-radius:10px;color:#6BE3A4;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .12s;white-space:nowrap}
+.sc-add-btn:hover{background:rgba(107,227,164,.18)}
+.sc-food-btn{padding:7px 14px;background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.2);border-radius:10px;color:#FB923C;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .12s;white-space:nowrap;margin-left:auto}
+.sc-food-btn:hover{background:rgba(251,146,60,.15)}
+
+/* ── Nav row ── */
+.sc-nav-row{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.sc-nav-btn{width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:rgba(255,255,255,.55);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;font-family:inherit;flex-shrink:0}
+.sc-nav-btn:hover{background:rgba(255,255,255,.09);color:#fff}
+.sc-nav-label{font-size:17px;font-weight:800;letter-spacing:-.02em;color:var(--text-primary,#FAFAFA)}
+.sc-today-btn{padding:4px 11px;border-radius:7px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:rgba(255,255,255,.48);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .12s}
+.sc-today-btn:hover{background:rgba(255,255,255,.09);color:#fff}
+
+/* ── Body layout ── */
+.sc-body{display:grid;grid-template-columns:1fr 272px;gap:12px;align-items:start}
+@media(max-width:820px){.sc-body{grid-template-columns:1fr}}
+
+/* ── Glass card ── */
+.sc-card{background:var(--card-bg,rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.07);border-radius:18px;overflow:hidden}
+
+/* ── Year view ── */
+.sc-year-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:18px}
+@media(max-width:900px){.sc-year-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.sc-year-grid{grid-template-columns:repeat(2,1fr)}}
+.sc-year-month{cursor:pointer;padding:9px 7px;border-radius:11px;border:1px solid rgba(255,255,255,.04);background:rgba(255,255,255,.02);transition:background .12s}
+.sc-year-month:hover{background:rgba(255,255,255,.06)}
+.sc-year-month.y-cur-month{border-color:rgba(107,227,164,.22)}
+.sc-year-month-name{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:5px}
+.sc-year-mini-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px}
+.sc-ymday{aspect-ratio:1/1;border-radius:2px;font-size:6.5px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.25);line-height:1}
+.sc-ymday.y-has-evt{background:rgba(107,227,164,.12);color:rgba(107,227,164,.7)}
+.sc-ymday.y-many-evt{background:rgba(107,227,164,.25);color:#6BE3A4}
+.sc-ymday.y-today{background:rgba(125,211,252,.22);color:#7DD3FC;font-weight:900}
+.sc-ymday.y-other-mo{opacity:.18}
+
+/* ── Month view ── */
+.sc-month-head{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid rgba(255,255,255,.05)}
+.sc-month-dow{padding:9px 6px;font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3);text-align:center}
+.sc-month-grid{display:grid;grid-template-columns:repeat(7,1fr)}
+.sc-mday{min-height:84px;padding:5px;border-right:1px solid rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.03);cursor:pointer;transition:background .1s;position:relative}
+.sc-mday:hover{background:rgba(255,255,255,.025)}
+.sc-mday.m-today .sc-daynum{background:rgba(125,211,252,.22);color:#7DD3FC;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:900}
+.sc-mday.m-other .sc-daynum{color:rgba(255,255,255,.18)}
+.sc-daynum{font-size:11.5px;font-weight:700;color:rgba(255,255,255,.65);margin-bottom:3px;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+.sc-echip{font-size:9.5px;font-weight:600;padding:2px 5px;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;background:rgba(125,211,252,.12);color:#7DD3FC;border:1px solid rgba(125,211,252,.18)}
+.sc-echip.ec-workout{background:rgba(107,227,164,.12);color:#6BE3A4;border-color:rgba(107,227,164,.2)}
+.sc-echip.ec-study{background:rgba(242,192,99,.12);color:#F2C063;border-color:rgba(242,192,99,.2)}
+.sc-echip.ec-meal{background:rgba(251,146,60,.12);color:#FB923C;border-color:rgba(251,146,60,.2)}
+.sc-echip.ec-appointment{background:rgba(248,113,113,.12);color:#F87171;border-color:rgba(248,113,113,.2)}
+.sc-echip.ec-personal{background:rgba(196,181,253,.12);color:#C4B5FD;border-color:rgba(196,181,253,.2)}
+.sc-echip.ec-goal{background:rgba(255,255,255,.04);color:rgba(255,255,255,.35);border:1px dashed rgba(255,255,255,.1);font-style:italic}
+.sc-more{font-size:9px;color:rgba(255,255,255,.3);padding:1px 3px}
+
+/* ── Week view ── */
+.sc-week-scroll{overflow-x:auto}
+.sc-week-grid{display:grid;grid-template-columns:46px repeat(7,1fr);min-width:520px}
+.sc-wdhead{padding:7px 4px;text-align:center;border-bottom:1px solid rgba(255,255,255,.05);font-size:10px;font-weight:700;color:rgba(255,255,255,.4)}
+.sc-wdhead.w-today-col{color:#7DD3FC}
+.sc-wdhead span{display:block;font-size:17px;font-weight:800;color:var(--text-primary,#FAFAFA);margin-top:2px}
+.sc-wdhead.w-today-col span{width:30px;height:30px;border-radius:50%;background:rgba(125,211,252,.18);color:#7DD3FC;display:inline-flex;align-items:center;justify-content:center;margin-top:2px}
+.sc-wtime{font-size:8.5px;color:rgba(255,255,255,.22);font-family:var(--font-mono,monospace);padding-right:5px;text-align:right;line-height:1;padding-top:2px;height:46px;display:flex;align-items:flex-start;justify-content:flex-end;font-weight:600}
+.sc-wcell{border-left:1px solid rgba(255,255,255,.035);border-bottom:1px solid rgba(255,255,255,.02);height:46px;position:relative;cursor:pointer;transition:background .09s}
+.sc-wcell:hover{background:rgba(255,255,255,.02)}
+.sc-wevt{position:absolute;left:1px;right:1px;border-radius:4px;padding:2px 4px;font-size:9px;font-weight:700;overflow:hidden;cursor:pointer;z-index:2;background:rgba(125,211,252,.18);color:#7DD3FC;border:1px solid rgba(125,211,252,.25);line-height:1.2}
+.sc-wevt.ec-workout{background:rgba(107,227,164,.18);color:#6BE3A4;border-color:rgba(107,227,164,.28)}
+.sc-wevt.ec-study{background:rgba(242,192,99,.18);color:#F2C063;border-color:rgba(242,192,99,.28)}
+.sc-wevt.ec-meal{background:rgba(251,146,60,.18);color:#FB923C;border-color:rgba(251,146,60,.28)}
+.sc-wevt.ec-appointment{background:rgba(248,113,113,.18);color:#F87171;border-color:rgba(248,113,113,.28)}
+.sc-wevt.ec-personal{background:rgba(196,181,253,.18);color:#C4B5FD;border-color:rgba(196,181,253,.28)}
+
+/* ── Day view ── */
+.sc-day-scroll{overflow-y:auto;max-height:calc(100vh - 260px)}
+.sc-day-grid{display:grid;grid-template-columns:46px 1fr;position:relative}
+.sc-dtime{font-size:8.5px;color:rgba(255,255,255,.22);font-family:var(--font-mono,monospace);padding-right:5px;text-align:right;line-height:1;padding-top:2px;height:60px;display:flex;align-items:flex-start;justify-content:flex-end;font-weight:600}
+.sc-dcell{height:60px;border-bottom:1px solid rgba(255,255,255,.035);position:relative;cursor:pointer;transition:background .09s}
+.sc-dcell:hover{background:rgba(255,255,255,.02)}
+.sc-devt{position:absolute;left:4px;right:4px;border-radius:7px;padding:4px 7px;font-size:10.5px;font-weight:700;overflow:hidden;cursor:pointer;z-index:2;background:rgba(125,211,252,.13);color:#7DD3FC;border:1px solid rgba(125,211,252,.22);display:flex;flex-direction:column;gap:1px}
+.sc-devt.ec-workout{background:rgba(107,227,164,.13);color:#6BE3A4;border-color:rgba(107,227,164,.22)}
+.sc-devt.ec-study{background:rgba(242,192,99,.13);color:#F2C063;border-color:rgba(242,192,99,.22)}
+.sc-devt.ec-meal{background:rgba(251,146,60,.13);color:#FB923C;border-color:rgba(251,146,60,.22)}
+.sc-devt.ec-appointment{background:rgba(248,113,113,.13);color:#F87171;border-color:rgba(248,113,113,.22)}
+.sc-devt.ec-personal{background:rgba(196,181,253,.13);color:#C4B5FD;border-color:rgba(196,181,253,.22)}
+.sc-devt-time{font-size:8.5px;opacity:.65;font-weight:600}
+.sc-now-line{position:absolute;left:0;right:0;height:2px;background:rgba(248,113,113,.8);z-index:5;pointer-events:none}
+.sc-now-line::before{content:'';position:absolute;left:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:#F87171}
+
+/* ── Sidebar ── */
+.sc-sidebar{display:flex;flex-direction:column;gap:10px}
+.sc-sbcard{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:15px;padding:13px}
+.sc-sbtitle{font-size:9.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:9px;display:flex;align-items:center;justify-content:space-between}
+.sc-sbadd{background:none;border:none;color:rgba(107,227,164,.65);font-size:16px;cursor:pointer;padding:0;line-height:1;font-family:inherit}
+.sc-evtitem{display:flex;gap:7px;align-items:flex-start;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.sc-evtitem:last-child{border-bottom:none}
+.sc-evtdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.sc-evtinfo{flex:1;min-width:0}
+.sc-evttitle{font-size:12px;font-weight:700;color:var(--text-primary,#FAFAFA);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc-evtmeta{font-size:10px;color:rgba(255,255,255,.35)}
+.sc-empty{font-size:11px;color:rgba(255,255,255,.25);font-style:italic;text-align:center;padding:8px 0}
+.sc-goalitem{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.sc-goalitem:last-child{border-bottom:none}
+.sc-goalchk{width:15px;height:15px;border-radius:4px;border:1.5px solid rgba(255,255,255,.18);background:none;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9px;transition:all .12s}
+.sc-goalchk.done{background:rgba(107,227,164,.18);border-color:rgba(107,227,164,.45);color:#6BE3A4}
+.sc-goaltext{font-size:11.5px;font-weight:600;color:var(--text-primary,#FAFAFA);flex:1;line-height:1.3}
+.sc-goaltext.done{color:rgba(255,255,255,.28);text-decoration:line-through}
+.sc-goalscope{font-size:8.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.25);flex-shrink:0}
+.sc-suggcard{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.055);border-radius:10px;padding:9px 11px;margin-bottom:7px;transition:background .12s}
+.sc-suggcard:hover{background:rgba(255,255,255,.05)}
+.sc-suggtitle{font-size:11px;font-weight:700;color:var(--text-primary,#FAFAFA);line-height:1.35;margin-bottom:4px}
+.sc-suggwhy{font-size:9.5px;color:rgba(255,255,255,.35);margin-bottom:7px;line-height:1.5}
+.sc-suggacts{display:flex;gap:5px}
+.sc-suggadd{padding:3px 10px;background:rgba(107,227,164,.09);border:1px solid rgba(107,227,164,.2);border-radius:5px;color:#6BE3A4;font-size:9px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .1s}
+.sc-suggdismiss{padding:3px 8px;background:none;border:1px solid rgba(255,255,255,.07);border-radius:5px;color:rgba(255,255,255,.25);font-size:9px;cursor:pointer;font-family:inherit}
+.sc-gcalbtn{padding:5px 11px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:7px;color:rgba(255,255,255,.42);font-size:10px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block;transition:all .12px;margin-right:5px}
+.sc-gcalbtn:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.7)}
+
+/* ── AI input bar ── */
+.sc-ai-bar{position:fixed;bottom:72px;left:50%;transform:translateX(-50%);width:min(680px,calc(100vw - 28px));background:rgba(12,12,18,.92);backdrop-filter:blur(22px) saturate(1.3);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:9px 10px;display:flex;gap:7px;align-items:center;z-index:100;box-shadow:0 8px 36px rgba(0,0,0,.55)}
+.sc-ai-input{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px 12px;color:var(--text-primary,#FAFAFA);font-family:inherit;font-size:12px;outline:none;transition:border-color .14s,background .14s;min-width:0}
+.sc-ai-input:focus{border-color:rgba(125,211,252,.28);background:rgba(255,255,255,.07)}
+.sc-ai-input::placeholder{color:rgba(255,255,255,.25)}
+.sc-ai-btn{padding:8px 15px;background:rgba(125,211,252,.1);border:1px solid rgba(125,211,252,.2);border-radius:10px;color:#7DD3FC;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .12s;flex-shrink:0;white-space:nowrap}
+.sc-ai-btn:hover{background:rgba(125,211,252,.18)}
+.sc-ai-btn:disabled{opacity:.4;cursor:default}
+
+/* ── Event modal ── */
+.sc-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(5px);opacity:0;pointer-events:none;transition:opacity .18s}
+.sc-modal-bg.open{opacity:1;pointer-events:all}
+.sc-modal{background:rgba(12,12,18,.97);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:22px;width:min(450px,calc(100vw - 28px));max-height:90vh;overflow-y:auto;transform:scale(.96) translateY(10px);transition:transform .18s}
+.sc-modal-bg.open .sc-modal{transform:none}
+.sc-modal-title{font-size:17px;font-weight:800;color:var(--text-primary,#FAFAFA);margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+.sc-modal-close{background:none;border:none;color:rgba(255,255,255,.38);font-size:20px;cursor:pointer;padding:0 3px;font-family:inherit;line-height:1}
+.sc-flabel{font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.36);margin-bottom:5px;display:block}
+.sc-fgroup{margin-bottom:12px}
+.sc-finput,.sc-fselect,.sc-ftextarea{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:9px;padding:8px 11px;color:var(--text-primary,#FAFAFA);font-family:inherit;font-size:12px;outline:none;transition:border-color .14s}
+.sc-finput:focus,.sc-fselect:focus,.sc-ftextarea:focus{border-color:rgba(125,211,252,.28)}
+.sc-fselect option{background:#111;color:#FAFAFA}
+.sc-ftextarea{resize:vertical;min-height:58px}
+.sc-frow{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.sc-factions{display:flex;gap:7px;justify-content:flex-end;margin-top:18px;border-top:1px solid rgba(255,255,255,.06);padding-top:14px;flex-wrap:wrap}
+.sc-fsave{padding:8px 20px;background:rgba(107,227,164,.11);border:1px solid rgba(107,227,164,.24);border-radius:9px;color:#6BE3A4;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .12s}
+.sc-fsave:hover{background:rgba(107,227,164,.2)}
+.sc-fcancel{padding:8px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:9px;color:rgba(255,255,255,.45);font-size:11.5px;cursor:pointer;font-family:inherit;transition:all .12s}
+.sc-fdelete{padding:8px 14px;background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.17);border-radius:9px;color:#F87171;font-size:11.5px;cursor:pointer;font-family:inherit;transition:all .12s}
+.sc-ftoggle-row{display:flex;align-items:center;gap:8px;margin-bottom:11px;cursor:pointer;user-select:none}
+.sc-ftoggle-lbl{font-size:11.5px;color:rgba(255,255,255,.45)}
+
+/* ── Food modal ── */
+.food-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:600;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .18s}
+.food-bg.open{opacity:1;pointer-events:all}
+.food-modal{background:rgba(10,10,16,.97);border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:26px;width:min(510px,calc(100vw - 28px));max-height:92vh;overflow-y:auto;transform:scale(.96) translateY(12px);transition:transform .18s}
+.food-bg.open .food-modal{transform:none}
+.food-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.food-modal-title{font-size:16px;font-weight:800;color:var(--text-primary,#FAFAFA)}
+.food-close{background:none;border:none;color:rgba(255,255,255,.38);font-size:20px;cursor:pointer;font-family:inherit;line-height:1}
+.food-dots{display:flex;gap:5px;justify-content:center;margin-bottom:18px}
+.food-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.14);transition:background .18s}
+.food-dot.active{background:#6BE3A4}
+.food-dot.done{background:rgba(107,227,164,.4)}
+.food-step-title{font-size:19px;font-weight:800;color:var(--text-primary,#FAFAFA);margin-bottom:4px}
+.food-step-sub{font-size:12.5px;color:rgba(255,255,255,.4);margin-bottom:18px}
+.food-ai-hint{font-size:10.5px;color:rgba(125,211,252,.55);background:rgba(125,211,252,.06);border:1px solid rgba(125,211,252,.12);border-radius:8px;padding:7px 10px;margin-bottom:14px;font-style:italic}
+.food-goal-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:16px}
+.food-gc{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:13px;padding:13px 9px;text-align:center;cursor:pointer;transition:all .13s}
+.food-gc:hover{background:rgba(255,255,255,.07)}
+.food-gc.fsel{background:rgba(107,227,164,.09);border-color:rgba(107,227,164,.28);color:#6BE3A4}
+.food-gc.fhint{border-color:rgba(125,211,252,.22);box-shadow:0 0 10px rgba(125,211,252,.07)}
+.food-gc-ico{font-size:22px;margin-bottom:5px}
+.food-gc-name{font-size:12.5px;font-weight:800;color:var(--text-primary,#FAFAFA)}
+.food-gc.fsel .food-gc-name{color:#6BE3A4}
+.food-gc-desc{font-size:9.5px;color:rgba(255,255,255,.35);margin-top:3px}
+.food-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.food-tag{padding:5px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:18px;font-size:11px;font-weight:600;color:rgba(255,255,255,.45);cursor:pointer;transition:all .11s}
+.food-tag.fsel{background:rgba(248,113,113,.09);border-color:rgba(248,113,113,.25);color:#F87171}
+.food-time-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px}
+.food-tc{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:11px;cursor:pointer;transition:all .12s}
+.food-tc:hover{background:rgba(255,255,255,.07)}
+.food-tc.fsel{background:rgba(107,227,164,.07);border-color:rgba(107,227,164,.22)}
+.food-tc-name{font-size:12px;font-weight:700;color:var(--text-primary,#FAFAFA)}
+.food-tc-sub{font-size:10px;color:rgba(255,255,255,.33);margin-top:2px}
+.food-days-row{display:flex;gap:8px;margin-bottom:16px}
+.food-daysbtn{flex:1;padding:9px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:9px;font-size:12px;font-weight:700;color:rgba(255,255,255,.45);cursor:pointer;font-family:inherit;transition:all .12px;text-align:center}
+.food-daysbtn.fsel{background:rgba(107,227,164,.09);border-color:rgba(107,227,164,.22);color:#6BE3A4}
+.food-ingr-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.food-ic{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:11px 7px;text-align:center;cursor:pointer;transition:all .12s}
+.food-ic.fsel{background:rgba(107,227,164,.07);border-color:rgba(107,227,164,.22)}
+.food-navrow{display:flex;gap:8px;justify-content:space-between;margin-top:14px;border-top:1px solid rgba(255,255,255,.06);padding-top:12px}
+.food-next{padding:8px 20px;background:rgba(107,227,164,.11);border:1px solid rgba(107,227,164,.24);border-radius:9px;color:#6BE3A4;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .12s}
+.food-back{padding:8px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:9px;color:rgba(255,255,255,.42);font-size:12px;cursor:pointer;font-family:inherit;transition:all .12s}
+/* Plan display */
+.food-plan-wrap{display:flex;flex-direction:column;gap:14px}
+.food-dayblock{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:13px;padding:13px}
+.food-daylbl{font-size:12.5px;font-weight:800;color:var(--text-primary,#FAFAFA);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.food-totals-lbl{font-size:9.5px;color:rgba(255,255,255,.35);font-weight:600}
+.food-mealrow{display:flex;gap:9px;align-items:flex-start;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.food-mealrow:last-child{border-bottom:none}
+.food-mtype{font-size:8.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.28);width:58px;flex-shrink:0;padding-top:2px}
+.food-mname{font-size:11.5px;font-weight:700;color:var(--text-primary,#FAFAFA);flex:1;min-width:0}
+.food-mmacros{font-size:9px;color:rgba(255,255,255,.32);margin-top:1px}
+.food-mingr{font-size:9px;color:rgba(255,255,255,.22);margin-top:1px;font-style:italic}
+.food-mcaladd{padding:2px 8px;background:rgba(107,227,164,.07);border:1px solid rgba(107,227,164,.17);border-radius:5px;color:#6BE3A4;font-size:8.5px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;transition:all .1s}
+.food-mcaladd:hover{background:rgba(107,227,164,.14)}
+
+/* ── Animations ── */
+@keyframes sc-fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.sc-card{animation:sc-fade .22s ease}
+@keyframes sc-pulse{0%,100%{opacity:.45}50%{opacity:1}}
+.sc-loading{animation:sc-pulse 1.5s ease-in-out infinite}
+</style>
+<script src="topbar.js" defer></script>
+</head>
+<body>
+<div class="sc-wrap">
+  <div class="sc-title-row">
+    <h1 class="sc-title">Schedule</h1>
+    <div class="sc-view-tabs">
+      <button class="sc-view-tab" id="vtYear"  onclick="setView('year')">Year</button>
+      <button class="sc-view-tab" id="vtMonth" onclick="setView('month')">Month</button>
+      <button class="sc-view-tab" id="vtWeek"  onclick="setView('week')">Week</button>
+      <button class="sc-view-tab" id="vtDay"   onclick="setView('day')">Day</button>
+    </div>
+    <button class="sc-food-btn" onclick="openFoodModal()">🍽 Meal Planner</button>
+    <button class="sc-add-btn" onclick="openEventModal()">+ New Event</button>
+  </div>
+  <div class="sc-nav-row">
+    <button class="sc-nav-btn" onclick="navigate(-1)">‹</button>
+    <div class="sc-nav-label" id="scNavLabel"></div>
+    <button class="sc-nav-btn" onclick="navigate(1)">›</button>
+    <button class="sc-today-btn" onclick="goToToday()">Today</button>
+  </div>
+  <div class="sc-body" id="scBody">
+    <div class="sc-card" id="scMainView"></div>
+    <div class="sc-sidebar" id="scSidebar"></div>
+  </div>
+</div>
+
+<!-- AI Event Bar -->
+<div class="sc-ai-bar">
+  <input class="sc-ai-input" id="scAiInput" placeholder='Try: "Gym tomorrow at 6pm" · "Study session Friday 4-6pm" · "Dentist next Monday"' autocomplete="off">
+  <button class="sc-ai-btn" id="scAiBtn" onclick="submitAIEvent()">Add with AI</button>
+</div>
+
+<!-- Event / Goal Modal -->
+<div class="sc-modal-bg" id="scModalBg" onclick="if(event.target===this)closeModal()">
+  <div class="sc-modal">
+    <div class="sc-modal-title">
+      <span id="scModalLabel">New Event</span>
+      <button class="sc-modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div id="scModalBody"></div>
+  </div>
+</div>
+
+<!-- Food Modal -->
+<div class="food-bg" id="foodBg" onclick="if(event.target===this)closeFoodModal()">
+  <div class="food-modal"><div id="foodInner"></div></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// SCHEDULE PLANNER  ·  schedule.html
+// ══════════════════════════════════════════════════════
+
+const EVENTS_KEY   = 'schedule:events:v1';
+const SGOALS_KEY   = 'schedule:goals:v1';
+const FOOD_PREFS_K = 'food:prefs:v1';
+const FOOD_PLAN_K  = 'food:plan:v1';
+
+// ── State ─────────────────────────────────────────────
+let _view     = 'month';
+let _viewDate = new Date();
+let _editId   = null;      // null = creating, string = editing
+let _foodStep = 1;
+let _foodP    = {};        // food preferences
+let _foodPlan = null;
+let _suggList = [];        // AI schedule suggestions
+
+// ── Date helpers ──────────────────────────────────────
+const _pad = n => String(n).padStart(2,'0');
+function _iso(d){ return d.getFullYear()+'-'+_pad(d.getMonth()+1)+'-'+_pad(d.getDate()); }
+function _fromIso(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+function _addDays(d,n){ const r=new Date(d); r.setDate(r.getDate()+n); return r; }
+function _weekStart(d){ const r=new Date(d); const dow=r.getDay(); r.setDate(r.getDate()-(dow===0?6:dow-1)); return r; }
+function _today(){ return _iso(new Date()); }
+function _fmtTime(t){
+  if(!t)return'';
+  const [h,m]=t.split(':').map(Number);
+  const ap=h>=12?'PM':'AM'; const h12=h%12||12;
+  return h12+(m>0?':'+_pad(m):'')+' '+ap;
+}
+function _minsOf(t){ if(!t)return 0; const[h,m]=t.split(':').map(Number); return h*60+(m||0); }
+function _addHHMM(t,mins){ const tot=_minsOf(t)+mins; return _pad(Math.floor(tot/60)%24)+':'+_pad(tot%60); }
+
+const DOW  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MSHT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// ── Storage ───────────────────────────────────────────
+function _evtsLoad(){ try{ return JSON.parse(localStorage.getItem(EVENTS_KEY))||[]; }catch{ return[]; } }
+function _evtsSave(a){ try{ localStorage.setItem(EVENTS_KEY,JSON.stringify(a)); }catch{} _bgSync(a); }
+function _sgoalsLoad(){ try{ return JSON.parse(localStorage.getItem(SGOALS_KEY))||[]; }catch{ return[]; } }
+function _sgoalsSave(a){ try{ localStorage.setItem(SGOALS_KEY,JSON.stringify(a)); }catch{} }
+function _foodPrefsLoad(){ try{ return JSON.parse(localStorage.getItem(FOOD_PREFS_K))||{}; }catch{ return{}; } }
+function _foodPrefsSave(p){ try{ localStorage.setItem(FOOD_PREFS_K,JSON.stringify(p)); }catch{} }
+
+function _newId(pre){ return (pre||'e')+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+
+// ── Recurrence expansion ──────────────────────────────
+function _expand(evts, s, e){
+  const ss=_iso(s), es=_iso(e), out=[];
+  evts.forEach(ev=>{
+    if(!ev.recurrence){
+      if(ev.date>=ss&&ev.date<=es) out.push({...ev});
+    } else {
+      const lim = ev.recurrenceEnd||_iso(_addDays(s,366));
+      let cur=_fromIso(ev.date); let i=0;
+      while(_iso(cur)<=es&&_iso(cur)<=lim&&i<500){
+        i++; const ds=_iso(cur);
+        if(ds>=ss&&ds<=es) out.push({...ev,date:ds,_rec:ds!==ev.date});
+        if(ev.recurrence==='daily') cur=_addDays(cur,1);
+        else if(ev.recurrence==='weekly') cur=_addDays(cur,7);
+        else if(ev.recurrence==='monthly'){ const n=new Date(cur); n.setMonth(n.getMonth()+1); cur=n; }
+        else break;
+      }
+    }
+  });
+  return out;
+}
+
+// ── Category helpers ──────────────────────────────────
+const CCOLORS={meeting:'#7DD3FC',workout:'#6BE3A4',study:'#F2C063',meal:'#FB923C',appointment:'#F87171',personal:'#C4B5FD',other:'rgba(255,255,255,.45)'};
+function _ccolor(c){ return CCOLORS[c]||CCOLORS.other; }
+const CCLS={meeting:'',workout:'ec-workout',study:'ec-study',meal:'ec-meal',appointment:'ec-appointment',personal:'ec-personal'};
+function _ccls(c){ return CCLS[c]||''; }
+function _esc(s){ if(!s)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+// ── View management ───────────────────────────────────
+function setView(v){
+  _view=v;
+  ['year','month','week','day'].forEach(x=>{
+    const el=document.getElementById('vt'+x[0].toUpperCase()+x.slice(1));
+    if(el) el.classList.toggle('active',x===v);
+  });
+  renderView();
+}
+
+function navigate(d){
+  if(_view==='year') _viewDate.setFullYear(_viewDate.getFullYear()+d);
+  else if(_view==='month') _viewDate.setMonth(_viewDate.getMonth()+d);
+  else if(_view==='week') _viewDate.setDate(_viewDate.getDate()+d*7);
+  else _viewDate.setDate(_viewDate.getDate()+d);
+  renderView();
+}
+
+function goToToday(){ _viewDate=new Date(); renderView(); }
+function goToDate(ds){ _viewDate=_fromIso(ds); setView('day'); }
+function goToMonth(y,m){ _viewDate=new Date(y,m,1); setView('month'); }
+
+function renderView(){
+  _updateLabel();
+  const main=document.getElementById('scMainView');
+  if(!main)return;
+  if(_view==='year') _renderYear(main);
+  else if(_view==='month') _renderMonth(main);
+  else if(_view==='week') _renderWeek(main);
+  else _renderDay(main);
+  renderSidebar();
+}
+
+function _updateLabel(){
+  const el=document.getElementById('scNavLabel'); if(!el)return;
+  const y=_viewDate.getFullYear(),m=_viewDate.getMonth();
+  if(_view==='year') el.textContent=y;
+  else if(_view==='month') el.textContent=MONS[m]+' '+y;
+  else if(_view==='week'){
+    const ws=_weekStart(_viewDate), we=_addDays(ws,6);
+    el.textContent=MSHT[ws.getMonth()]+' '+ws.getDate()+' – '+MSHT[we.getMonth()]+' '+we.getDate()+', '+we.getFullYear();
+  } else {
+    el.textContent=DOW[_viewDate.getDay()]+' · '+MONS[m]+' '+_viewDate.getDate()+', '+y;
+  }
+}
+
+// ── Year View ─────────────────────────────────────────
+function _renderYear(c){
+  const yr=_viewDate.getFullYear(), td=_today();
+  const all=_evtsLoad();
+  const ebd={}; _expand(all,new Date(yr,0,1),new Date(yr,11,31)).forEach(e=>{ ebd[e.date]=(ebd[e.date]||0)+1; });
+  let h='<div class="sc-year-grid">';
+  for(let mi=0;mi<12;mi++){
+    const fd=new Date(yr,mi,1), ld=new Date(yr,mi+1,0);
+    const isCur=mi===new Date().getMonth()&&yr===new Date().getFullYear();
+    const sdow=(fd.getDay()+6)%7;
+    h+=`<div class="sc-year-month${isCur?' y-cur-month':''}" onclick="goToMonth(${yr},${mi})">`;
+    h+=`<div class="sc-year-month-name">${MSHT[mi]}</div><div class="sc-year-mini-grid">`;
+    ['M','T','W','T','F','S','S'].forEach(d=>{ h+=`<div class="sc-ymday" style="color:rgba(255,255,255,.14);font-size:6px">${d}</div>`; });
+    for(let i=0;i<sdow;i++) h+=`<div class="sc-ymday y-other-mo"></div>`;
+    for(let d=1;d<=ld.getDate();d++){
+      const ds=`${yr}-${_pad(mi+1)}-${_pad(d)}`;
+      const cnt=ebd[ds]||0, isT=ds===td;
+      let cls='sc-ymday';
+      if(isT) cls+=' y-today';
+      else if(cnt>=3) cls+=' y-many-evt';
+      else if(cnt>0) cls+=' y-has-evt';
+      h+=`<div class="${cls}">${d}</div>`;
+    }
+    h+='</div></div>';
+  }
+  h+='</div>'; c.innerHTML=h;
+}
+
+// ── Month View ────────────────────────────────────────
+function _renderMonth(c){
+  const yr=_viewDate.getFullYear(), mo=_viewDate.getMonth(), td=_today();
+  const fd=new Date(yr,mo,1), ld=new Date(yr,mo+1,0);
+  const all=_evtsLoad(), goals=_sgoalsLoad();
+  const exp=_expand(all,_addDays(fd,-7),_addDays(ld,7));
+  const ebd={}; exp.forEach(e=>{ (ebd[e.date]=ebd[e.date]||[]).push(e); });
+  const gbd={}; goals.filter(g=>g.targetDate&&(g.scope==='daily'||g.scope==='weekly')).forEach(g=>{ (gbd[g.targetDate]=gbd[g.targetDate]||[]).push(g); });
+  const sdow=(fd.getDay()+6)%7;
+  let h=`<div class="sc-month-head">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=>`<div class="sc-month-dow">${d}</div>`).join('')}</div><div class="sc-month-grid">`;
+  for(let i=0;i<sdow;i++){
+    const pd=_addDays(fd,i-sdow), ds=_iso(pd);
+    h+=`<div class="sc-mday m-other" onclick="goToDate('${ds}')"><div class="sc-daynum">${pd.getDate()}</div></div>`;
+  }
+  for(let d=1;d<=ld.getDate();d++){
+    const ds=`${yr}-${_pad(mo+1)}-${_pad(d)}`;
+    const devts=ebd[ds]||[], dgoals=gbd[ds]||[], isT=ds===td;
+    const chips=devts.slice(0,2).map(e=>`<div class="sc-echip ${_ccls(e.category)}" onclick="event.stopPropagation();openEventModal('${e.id}')" title="${_esc(e.title)}">${e.startTime?_fmtTime(e.startTime)+' ':''}${_esc(e.title)}</div>`).join('');
+    const more=devts.length>2?`<div class="sc-more">+${devts.length-2} more</div>`:'';
+    const gchips=dgoals.slice(0,1).map(g=>`<div class="sc-echip ec-goal" title="${_esc(g.title)}">${_esc(g.title)}</div>`).join('');
+    h+=`<div class="sc-mday${isT?' m-today':''}" onclick="goToDate('${ds}')"><div class="sc-daynum">${d}</div>${chips}${more}${gchips}</div>`;
+  }
+  const total=Math.ceil((sdow+ld.getDate())/7)*7;
+  for(let i=1;i<=total-sdow-ld.getDate();i++){
+    const nd=_addDays(ld,i), ds=_iso(nd);
+    h+=`<div class="sc-mday m-other" onclick="goToDate('${ds}')"><div class="sc-daynum">${nd.getDate()}</div></div>`;
+  }
+  h+='</div>'; c.innerHTML=h;
+}
+
+// ── Week View ─────────────────────────────────────────
+function _renderWeek(c){
+  const ws=_weekStart(_viewDate), we=_addDays(ws,6), td=_today();
+  const days=Array.from({length:7},(_,i)=>{ const d=_addDays(ws,i); return{date:_iso(d),d,evts:[]}; });
+  _expand(_evtsLoad(),ws,we).forEach(e=>{ const day=days.find(d=>d.date===e.date); if(day) day.evts.push(e); });
+  let h=`<div class="sc-week-scroll"><div class="sc-week-grid"><div style="border-bottom:1px solid rgba(255,255,255,.05)"></div>`;
+  days.forEach(day=>{
+    const isT=day.date===td, dn=day.d.getDate();
+    h+=`<div class="sc-wdhead${isT?' w-today-col':''}">${DOW[day.d.getDay()]}<span>${dn}</span></div>`;
+  });
+  // All-day row
+  h+=`<div class="sc-wtime" style="height:auto;padding:5px 5px 5px 0;align-items:center">ALL</div>`;
+  days.forEach(day=>{
+    const ads=day.evts.filter(e=>e.allDay);
+    h+=`<div style="border-left:1px solid rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.05);padding:2px;min-height:22px">${ads.map(e=>`<div class="sc-wevt ${_ccls(e.category)}" style="position:relative;margin-bottom:2px" onclick="openEventModal('${e.id}')">${_esc(e.title)}</div>`).join('')}</div>`;
+  });
+  // Hour rows 6am–11pm
+  for(let hr=6;hr<=23;hr++){
+    const lbl=hr<12?hr+' AM':hr===12?'12 PM':(hr-12)+' PM';
+    h+=`<div class="sc-wtime">${lbl}</div>`;
+    days.forEach(day=>{
+      const cellEvts=day.evts.filter(e=>!e.allDay&&e.startTime&&Math.floor(_minsOf(e.startTime)/60)===hr);
+      const blks=cellEvts.map(e=>{
+        const sm=_minsOf(e.startTime), em=_minsOf(e.endTime||_addHHMM(e.startTime,60));
+        const top=(sm%60)/60*46, ht=Math.max(18,(em-sm)/60*46);
+        return `<div class="sc-wevt ${_ccls(e.category)}" style="top:${top}px;height:${ht}px" onclick="event.stopPropagation();openEventModal('${e.id}')">${_esc(e.title)}</div>`;
+      }).join('');
+      h+=`<div class="sc-wcell" onclick="_clickCell('${day.date}','${_pad(hr)}:00')">${blks}</div>`;
+    });
+  }
+  h+='</div></div>'; c.innerHTML=h;
+}
+function _clickCell(ds,t){ openEventModal(null,{date:ds,startTime:t}); }
+
+// ── Day View ──────────────────────────────────────────
+function _renderDay(c){
+  const ds=_iso(_viewDate), td=_today(), isT=ds===td;
+  const evts=_expand(_evtsLoad(),_viewDate,_viewDate).sort((a,b)=>(a.startTime||'').localeCompare(b.startTime||''));
+  const goals=_sgoalsLoad().filter(g=>g.targetDate===ds);
+  const allDay=evts.filter(e=>e.allDay), timed=evts.filter(e=>!e.allDay&&e.startTime);
+  const now=new Date(), nowM=isT?now.getHours()*60+now.getMinutes():-1;
+  let h='<div class="sc-day-scroll"><div class="sc-day-grid">';
+  if(allDay.length||goals.length){
+    h+=`<div style="grid-column:1/3;padding:7px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;gap:5px;flex-wrap:wrap">
+      ${allDay.map(e=>`<div class="sc-devt ${_ccls(e.category)}" style="position:relative;flex:0 0 auto;min-width:0" onclick="openEventModal('${e.id}')">${_esc(e.title)}</div>`).join('')}
+      ${goals.map(g=>`<div class="sc-devt" style="position:relative;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.1);color:rgba(255,255,255,.42);flex:0 0 auto;min-width:0">${_esc(g.title)}</div>`).join('')}
+    </div>`;
+  }
+  for(let hr=0;hr<=23;hr++){
+    const lbl=hr===0?'12 AM':hr<12?hr+' AM':hr===12?'12 PM':(hr-12)+' PM';
+    const cellEvts=timed.filter(e=>Math.floor(_minsOf(e.startTime)/60)===hr);
+    const showNow=isT&&nowM>=hr*60&&nowM<(hr+1)*60;
+    const nowTop=showNow?(nowM-hr*60)/60*60:-1;
+    const blks=cellEvts.map(e=>{
+      const sm=_minsOf(e.startTime), em=_minsOf(e.endTime||_addHHMM(e.startTime,60));
+      const top=(sm%60)/60*60, ht=Math.max(26,(em-sm)/60*60);
+      return `<div class="sc-devt ${_ccls(e.category)}" style="top:${top}px;height:${ht}px" onclick="openEventModal('${e.id}')">
+        <span>${_esc(e.title)}</span>
+        <span class="sc-devt-time">${_fmtTime(e.startTime)}${e.endTime?' – '+_fmtTime(e.endTime):''}</span>
+      </div>`;
+    }).join('');
+    h+=`<div class="sc-dtime">${lbl}</div><div class="sc-dcell" onclick="_clickCell('${ds}','${_pad(hr)}:00')">${blks}${showNow?`<div class="sc-now-line" style="top:${nowTop}px"></div>`:''}</div>`;
+  }
+  h+='</div></div>'; c.innerHTML=h;
+  // Auto-scroll to current hour
+  if(isT){ const scroll=c.querySelector('.sc-day-scroll'); if(scroll){ const h8=Math.max(0,(nowM/60-1))*60; scroll.scrollTop=h8; } }
+}
+
+// ── Sidebar ───────────────────────────────────────────
+function renderSidebar(){
+  const sb=document.getElementById('scSidebar'); if(!sb)return;
+  const td=_today(), all=_evtsLoad(), goals=_sgoalsLoad();
+  const upcoming=_expand(all,new Date(),_addDays(new Date(),7)).filter(e=>e.date>=td).sort((a,b)=>a.date.localeCompare(b.date)||(a.startTime||'').localeCompare(b.startTime||''));
+  const upHTML=upcoming.length?upcoming.slice(0,6).map(e=>{
+    const lbl=e.date===td?'Today':e.date===_iso(_addDays(new Date(),1))?'Tomorrow':MSHT[_fromIso(e.date).getMonth()]+' '+_fromIso(e.date).getDate();
+    return `<div class="sc-evtitem"><div class="sc-evtdot" style="background:${_ccolor(e.category)}"></div><div class="sc-evtinfo"><div class="sc-evttitle">${_esc(e.title)}</div><div class="sc-evtmeta">${lbl}${e.startTime?' · '+_fmtTime(e.startTime):''}</div></div></div>`;
+  }).join(''):'<div class="sc-empty">No upcoming events</div>';
+  const activeGoals=goals.filter(g=>!g.done).slice(0,5);
+  const goalsHTML=activeGoals.length?activeGoals.map(g=>`<div class="sc-goalitem"><div class="sc-goalchk${g.done?' done':''}" onclick="_toggleGoal('${g.id}')">${g.done?'✓':''}</div><div class="sc-goaltext${g.done?' done':''}">${_esc(g.title)}</div><div class="sc-goalscope">${g.scope}</div></div>`).join(''):'<div class="sc-empty">No active goals</div>';
+  const suggsHTML=_suggList.length?_suggList.slice(0,3).map((s,i)=>`<div class="sc-suggcard"><div class="sc-suggtitle">${_esc(s.title)}</div><div class="sc-suggwhy">${_esc(s.why)}</div><div class="sc-suggacts"><button class="sc-suggadd" onclick="_takeSugg(${i})">Add to Schedule</button><button class="sc-suggdismiss" onclick="_dropSugg(${i})">Dismiss</button></div></div>`).join(''):'<div class="sc-empty sc-loading">Loading suggestions…</div>';
+  sb.innerHTML=`
+    <div class="sc-sbcard"><div class="sc-sbtitle">Upcoming</div>${upHTML}</div>
+    <div class="sc-sbcard"><div class="sc-sbtitle">Goals <button class="sc-sbadd" onclick="openGoalModal()">+</button></div>${goalsHTML}</div>
+    <div class="sc-sbcard"><div class="sc-sbtitle">AI Suggestions</div>${suggsHTML}</div>
+    <div class="sc-sbcard"><div class="sc-sbtitle">Export</div><button class="sc-gcalbtn" onclick="_exportICS()">⬇ .ics</button><button class="sc-gcalbtn" onclick="openFoodModal()">🍽 Meals</button></div>`;
+}
+
+function _toggleGoal(id){
+  let gs=_sgoalsLoad(); const g=gs.find(x=>x.id===id); if(g) g.done=!g.done; _sgoalsSave(gs); renderSidebar();
+}
+
+// ── AI Suggestions ────────────────────────────────────
+async function _loadSuggestions(){
+  const evts=_evtsLoad(), goals=_sgoalsLoad();
+  _suggList=_localSuggestions(evts,goals);
+  renderSidebar();
+  if(!window.TopbarAI||!window.TopbarAI.isEnabled())return;
+  try{
+    const td=_today();
+    const up=_expand(evts,new Date(),_addDays(new Date(),14));
+    const wouts=up.filter(e=>e.category==='workout').length;
+    const study=up.filter(e=>e.category==='study').length;
+    const pg=goals.filter(g=>!g.done).map(g=>g.title).slice(0,4).join(', ');
+    const resp=await window.TopbarAI.generateSummary(`Schedule assistant. Suggest 2-3 improvements based on: ${wouts} workouts and ${study} study sessions in next 14 days. Pending goals: ${pg||'none'}. Today: ${td}.
+Return suggestions separated by @@@. Each:
+TITLE: short action
+WHY: 1 sentence
+DATE: YYYY-MM-DD
+TIME: HH:MM or null
+CAT: workout/study/meal/personal/other`);
+    if(resp&&resp.trim()){
+      _suggList=resp.split('@@@').map(b=>{
+        const g=k=>{ const m=b.match(new RegExp(k+':\\s*(.+)','i')); return m?m[1].trim():''; };
+        return{title:g('TITLE'),why:g('WHY'),date:g('DATE'),time:g('TIME')!=='null'?g('TIME'):null,category:g('CAT')};
+      }).filter(s=>s.title);
+      renderSidebar();
+    }
+  }catch{}
+}
+
+function _localSuggestions(evts,goals){
+  const up=_expand(evts,new Date(),_addDays(new Date(),7)), s=[];
+  if(!up.find(e=>e.category==='workout')) s.push({title:'Schedule a workout this week',why:'No workouts planned in the next 7 days.',date:_iso(_addDays(new Date(),2)),time:'18:00',category:'workout'});
+  if(!up.find(e=>e.category==='study')&&goals.filter(g=>!g.done).length>0) s.push({title:'Block study time this week',why:'You have pending goals but no study sessions scheduled.',date:_iso(_addDays(new Date(),1)),time:'14:00',category:'study'});
+  return s;
+}
+
+function _takeSugg(i){
+  const s=_suggList[i]; if(!s)return;
+  openEventModal(null,{title:s.title,date:s.date||_today(),startTime:s.time,endTime:s.time?_addHHMM(s.time,60):null,category:s.category||'other'});
+  _suggList.splice(i,1); renderSidebar();
+}
+function _dropSugg(i){ _suggList.splice(i,1); renderSidebar(); }
+
+// ── Event Modal ───────────────────────────────────────
+function openEventModal(id,defaults){
+  _editId=id||null;
+  let ev=null;
+  if(id){ const a=_evtsLoad(); ev=a.find(e=>e.id===id); }
+  const d=ev||defaults||{};
+  const cats=[['meeting','Meeting'],['workout','Workout'],['study','Study'],['meal','Meal'],['appointment','Appointment'],['personal','Personal'],['other','Other']];
+  const gcLink=ev?_gcalLink(ev):'';
+  document.getElementById('scModalLabel').textContent=ev?'Edit Event':'New Event';
+  document.getElementById('scModalBody').innerHTML=`
+    <div class="sc-fgroup"><label class="sc-flabel">Title</label><input class="sc-finput" id="evTitle" value="${_esc(d.title||'')}" placeholder="Event title" autocomplete="off"></div>
+    <div class="sc-frow">
+      <div class="sc-fgroup"><label class="sc-flabel">Date</label><input class="sc-finput" id="evDate" type="date" value="${d.date||_today()}"></div>
+      <div class="sc-fgroup"><label class="sc-flabel">Category</label><select class="sc-fselect" id="evCat">${cats.map(([v,l])=>`<option value="${v}"${(d.category||'other')===v?' selected':''}>${l}</option>`).join('')}</select></div>
+    </div>
+    <label class="sc-ftoggle-row"><input type="checkbox" id="evAllDay" ${d.allDay?'checked':''} onchange="document.getElementById('evTimeRow').style.display=this.checked?'none':'grid'"><span class="sc-ftoggle-lbl">All-day event</span></label>
+    <div class="sc-frow" id="evTimeRow" style="${d.allDay?'display:none':''}">
+      <div class="sc-fgroup"><label class="sc-flabel">Start</label><input class="sc-finput" id="evStart" type="time" value="${d.startTime||''}"></div>
+      <div class="sc-fgroup"><label class="sc-flabel">End</label><input class="sc-finput" id="evEnd" type="time" value="${d.endTime||''}"></div>
+    </div>
+    <div class="sc-fgroup"><label class="sc-flabel">Recurrence</label><select class="sc-fselect" id="evRecur"><option value="">None</option><option value="daily"${(d.recurrence||'')==='daily'?' selected':''}>Daily</option><option value="weekly"${(d.recurrence||'')==='weekly'?' selected':''}>Weekly</option><option value="monthly"${(d.recurrence||'')==='monthly'?' selected':''}>Monthly</option></select></div>
+    <div class="sc-fgroup"><label class="sc-flabel">Notes</label><textarea class="sc-ftextarea" id="evDesc" placeholder="Optional notes">${_esc(d.description||'')}</textarea></div>
+    ${gcLink?`<a class="sc-gcalbtn" href="${gcLink}" target="_blank" rel="noopener" style="margin-bottom:4px;display:inline-block">📅 Add to Google Calendar</a>`:''}
+    <div class="sc-factions">
+      ${ev?`<button class="sc-fdelete" onclick="deleteEvent('${ev.id}')">Delete</button>`:''}
+      <button class="sc-fcancel" onclick="closeModal()">Cancel</button>
+      <button class="sc-fsave" onclick="saveEvent()">Save</button>
+    </div>`;
+  document.getElementById('scModalBg').classList.add('open');
+  setTimeout(()=>{ const i=document.getElementById('evTitle'); if(i)i.focus(); },100);
+}
+
+function closeModal(){ document.getElementById('scModalBg').classList.remove('open'); _editId=null; }
+
+function saveEvent(){
+  const title=document.getElementById('evTitle')?.value.trim(); if(!title){ document.getElementById('evTitle')?.focus(); return; }
+  const date=document.getElementById('evDate')?.value||_today();
+  const cat=document.getElementById('evCat')?.value||'other';
+  const allDay=document.getElementById('evAllDay')?.checked||false;
+  const st=allDay?null:(document.getElementById('evStart')?.value||null);
+  const et=allDay?null:(document.getElementById('evEnd')?.value||null);
+  const recur=document.getElementById('evRecur')?.value||null;
+  const desc=document.getElementById('evDesc')?.value.trim()||'';
+  let evts=_evtsLoad();
+  if(_editId){
+    const i=evts.findIndex(e=>e.id===_editId);
+    if(i!==-1) evts[i]={...evts[i],title,date,category:cat,allDay,startTime:st,endTime:et,recurrence:recur||null,description:desc,updatedAt:new Date().toISOString()};
+  } else {
+    evts.push({id:_newId('evt'),title,date,category:cat,allDay,startTime:st,endTime:et,recurrence:recur||null,recurrenceEnd:null,description:desc,createdAt:new Date().toISOString()});
+  }
+  _evtsSave(evts); closeModal(); renderView(); _toast(_editId?'Event updated':'Event added ✓');
+}
+
+function deleteEvent(id){
+  let evts=_evtsLoad().filter(e=>e.id!==id); _evtsSave(evts);
+  // Also remove from Supabase
+  fetch('/api/events',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({table:'events',client_id:id})}).catch(()=>{});
+  closeModal(); renderView(); _toast('Event removed');
+}
+
+// ── Goal Modal ────────────────────────────────────────
+function openGoalModal(defaults){
+  const d=defaults||{};
+  document.getElementById('scModalLabel').textContent='New Goal';
+  document.getElementById('scModalBody').innerHTML=`
+    <div class="sc-fgroup"><label class="sc-flabel">Goal</label><input class="sc-finput" id="sgTitle" value="${_esc(d.title||'')}" placeholder="e.g. 4 workouts this week" autocomplete="off"></div>
+    <div class="sc-frow">
+      <div class="sc-fgroup"><label class="sc-flabel">Scope</label><select class="sc-fselect" id="sgScope"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></div>
+      <div class="sc-fgroup"><label class="sc-flabel">Category</label><select class="sc-fselect" id="sgCat"><option value="health">Health</option><option value="academic">Academic</option><option value="finance">Finance</option><option value="personal" selected>Personal</option></select></div>
+    </div>
+    <div class="sc-fgroup"><label class="sc-flabel">Target Date</label><input class="sc-finput" id="sgDate" type="date" value="${d.targetDate||_today()}"></div>
+    <div class="sc-factions"><button class="sc-fcancel" onclick="closeModal()">Cancel</button><button class="sc-fsave" onclick="saveGoal()">Save Goal</button></div>`;
+  document.getElementById('scModalBg').classList.add('open');
+  setTimeout(()=>{ const i=document.getElementById('sgTitle'); if(i)i.focus(); },100);
+}
+
+function saveGoal(){
+  const title=document.getElementById('sgTitle')?.value.trim(); if(!title)return;
+  const scope=document.getElementById('sgScope')?.value||'weekly';
+  const category=document.getElementById('sgCat')?.value||'personal';
+  const targetDate=document.getElementById('sgDate')?.value||_today();
+  let gs=_sgoalsLoad();
+  gs.push({id:_newId('sg'),title,scope,category,targetDate,done:false,createdAt:new Date().toISOString()});
+  _sgoalsSave(gs); closeModal(); renderSidebar(); renderView(); _toast('Goal added ✓');
+}
+
+// ── AI Event Creation ─────────────────────────────────
+async function submitAIEvent(){
+  const inp=document.getElementById('scAiInput'), btn=document.getElementById('scAiBtn');
+  const text=inp?.value.trim(); if(!text){ inp?.focus(); return; }
+  if(btn){btn.textContent='Parsing…';btn.disabled=true;}
+  try{
+    let parsed=null;
+    if(window.TopbarAI&&window.TopbarAI.isEnabled()){
+      const td=_today();
+      const resp=await window.TopbarAI.generateSummary(`Calendar parser. Today is ${td}.\nInput: "${text}"\n\nReply ONLY:\nTITLE: event title\nDATE: YYYY-MM-DD\nSTART: HH:MM or NONE\nEND: HH:MM or NONE\nCATEGORY: meeting/workout/study/meal/appointment/personal/other\nRECURRENCE: none/daily/weekly/monthly\nDESC: brief note or NONE`);
+      if(resp) parsed=_parseAIEvt(resp,text);
+    }
+    if(!parsed) parsed=_nlpEvt(text);
+    openEventModal(null,parsed||(title?{title:text}:{title:text}));
+    if(inp) inp.value='';
+  }catch{
+    openEventModal(null,{title:text}); if(inp) inp.value='';
+  }finally{
+    if(btn){btn.textContent='Add with AI';btn.disabled=false;}
+  }
+}
+
+function _parseAIEvt(text,fb){
+  const g=k=>{ const m=text.match(new RegExp('^'+k+':\\s*(.+)','im')); return m?m[1].trim():null; };
+  const title=g('TITLE')||fb;
+  const date=/^\d{4}-\d{2}-\d{2}$/.test(g('DATE')||'')?g('DATE'):_today();
+  const st=g('START'), et=g('END'), cat=g('CATEGORY'), rec=g('RECURRENCE');
+  return{title,date,startTime:st&&st!=='NONE'?st:null,endTime:et&&et!=='NONE'?et:null,category:['meeting','workout','study','meal','appointment','personal','other'].includes(cat)?cat:'other',recurrence:['daily','weekly','monthly'].includes(rec)?rec:null,description:(g('DESC')||'')!=='NONE'?(g('DESC')||''):''};
+}
+
+function _nlpEvt(text){
+  const lc=text.toLowerCase(), today=new Date();
+  let date=_today();
+  const wdMap={monday:1,tuesday:2,wednesday:3,thursday:4,friday:5,saturday:6,sunday:0};
+  if(/\btomorrow\b/.test(lc)) date=_iso(_addDays(today,1));
+  else { for(const[wd,dow] of Object.entries(wdMap)){ if(new RegExp('\\b'+wd+'\\b').test(lc)){ const diff=(dow-today.getDay()+7)%7||7; date=_iso(_addDays(today,diff)); break; } } }
+  if(/next week/.test(lc)) date=_iso(_addDays(today,7));
+  let st=null,et=null;
+  const tm=lc.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/);
+  if(tm){ let h=parseInt(tm[1]),m=parseInt(tm[2]||'0'); const ap=tm[3]; if(ap==='pm'&&h<12)h+=12; if(ap==='am'&&h===12)h=0; st=_pad(h)+':'+_pad(m); }
+  const rm=lc.match(/from\s+(\d{1,2})\s+to\s+(\d{1,2})/);
+  if(rm){ st=_pad(parseInt(rm[1]))+':00'; let eh=parseInt(rm[2]); if(eh<parseInt(rm[1]))eh+=12; et=_pad(eh)+':00'; }
+  let cat='other';
+  if(/gym|workout|exercise|run|yoga|crossfit|lifting|training/.test(lc)) cat='workout';
+  else if(/study|homework|exam|test|class|lecture|assignment|review/.test(lc)) cat='study';
+  else if(/meeting|call|conference|interview|standup|zoom/.test(lc)) cat='meeting';
+  else if(/lunch|dinner|breakfast|eat|meal|restaurant|food/.test(lc)) cat='meal';
+  else if(/doctor|dentist|appointment|checkup|therapy|clinic/.test(lc)) cat='appointment';
+  let rec=null;
+  if(/every day|daily/.test(lc)) rec='daily';
+  else if(/every week|weekly|every (mon|tue|wed|thu|fri|sat|sun)/.test(lc)) rec='weekly';
+  const title=text.replace(/\b(tomorrow|today|this|next|every|weekly|daily|monthly)\b/gi,'').replace(/\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi,'').replace(/\d{1,2}(?::\d{2})?\s*(?:am|pm)/gi,'').replace(/\bfrom\s+\d+\s+to\s+\d+\b/gi,'').replace(/\bat\b/gi,'').replace(/\s+/g,' ').trim()||text.trim();
+  return{title,date,startTime:st,endTime:et,category:cat,recurrence:rec};
+}
+
+// ── Google Calendar link ──────────────────────────────
+function _gcalLink(ev){
+  if(!ev.date)return'';
+  const t=encodeURIComponent(ev.title), desc=encodeURIComponent(ev.description||'');
+  let dates;
+  if(ev.allDay||!ev.startTime){ const d=ev.date.replace(/-/g,''); dates=d+'/'+(d.slice(0,4)+(parseInt(d.slice(4,6)))+''+parseInt(d.slice(6,8))+1).replace(/(\d{4})(\d)(\d{2})/,'$1'+String(parseInt(d.slice(4,6))).padStart(2,'0')+_pad(parseInt(d.slice(6,8))+1));
+    const nd=_addDays(_fromIso(ev.date),1); dates=ev.date.replace(/-/g,'')+'/'+_iso(nd).replace(/-/g,'');
+  } else {
+    const d=ev.date.replace(/-/g,''), s=(ev.startTime||'00:00').replace(':','')+'00', e=(ev.endTime||_addHHMM(ev.startTime,60)).replace(':','')+'00';
+    dates=d+'T'+s+'/'+d+'T'+e;
+  }
+  return`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${t}&dates=${dates}&details=${desc}`;
+}
+
+// ── ICS Export ────────────────────────────────────────
+function _exportICS(){
+  const evts=_evtsLoad(); if(!evts.length){_toast('No events to export');return;}
+  let ics='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Dashboard//Schedule//EN\r\n';
+  evts.forEach(e=>{
+    ics+='BEGIN:VEVENT\r\nUID:'+e.id+'@dashboard\r\nSUMMARY:'+e.title.replace(/[,;\\]/g,'\\$&')+'\r\n';
+    if(e.allDay||!e.startTime){ ics+='DTSTART;VALUE=DATE:'+e.date.replace(/-/g,'')+'\r\n'; }
+    else{ ics+='DTSTART:'+e.date.replace(/-/g,'')+'T'+(e.startTime||'00:00').replace(':','')+'00\r\n'; if(e.endTime) ics+='DTEND:'+e.date.replace(/-/g,'')+'T'+e.endTime.replace(':','')+'00\r\n'; }
+    if(e.description) ics+='DESCRIPTION:'+e.description.replace(/\n/g,'\\n')+'\r\n';
+    if(e.recurrence){ const m={daily:'DAILY',weekly:'WEEKLY',monthly:'MONTHLY'}; if(m[e.recurrence]) ics+='RRULE:FREQ='+m[e.recurrence]+'\r\n'; }
+    ics+='END:VEVENT\r\n';
+  });
+  ics+='END:VCALENDAR';
+  const blob=new Blob([ics],{type:'text/calendar'}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='schedule.ics'; a.click(); URL.revokeObjectURL(url);
+}
+
+// ── Food Suggest System ───────────────────────────────
+function openFoodModal(){
+  _foodP=_foodPrefsLoad(); _foodStep=1; _renderFoodStep();
+  document.getElementById('foodBg').classList.add('open');
+}
+function closeFoodModal(){ document.getElementById('foodBg').classList.remove('open'); }
+
+function _renderFoodStep(){
+  const inner=document.getElementById('foodInner'); if(!inner)return;
+  let bmi=null; try{const hb=JSON.parse(localStorage.getItem('health:bmi:v1'));bmi=hb?.bmi;}catch{}
+  const sugCut=bmi&&bmi>=25, sugBulk=bmi&&bmi<18.5;
+  const dots=Array.from({length:5},(_,i)=>`<div class="food-dot${i+1===_foodStep?' active':i+1<_foodStep?' done':''}"></div>`).join('');
+  let body='';
+  if(_foodStep===1){
+    const sel=_foodP.goalType||'balanced';
+    const hint=sugCut?'Based on your BMI, a Cut plan may help reach your goals':sugBulk?'Based on your BMI, a Bulk plan may support healthy weight gain':'';
+    body=`<div class="food-step-title">Goal Type</div><div class="food-step-sub">What's your primary nutrition goal?</div>
+      ${hint?`<div class="food-ai-hint">💡 ${hint}</div>`:''}
+      <div class="food-goal-cards">
+        <div class="food-gc${sel==='cut'?' fsel':''}${sugCut?' fhint':''}" onclick="_fselGoal('cut')"><div class="food-gc-ico">🔥</div><div class="food-gc-name">Cut</div><div class="food-gc-desc">Calorie deficit</div></div>
+        <div class="food-gc${sel==='balanced'?' fsel':''}" onclick="_fselGoal('balanced')"><div class="food-gc-ico">⚖️</div><div class="food-gc-name">Balanced</div><div class="food-gc-desc">Maintain & optimize</div></div>
+        <div class="food-gc${sel==='bulk'?' fsel':''}${sugBulk?' fhint':''}" onclick="_fselGoal('bulk')"><div class="food-gc-ico">💪</div><div class="food-gc-name">Bulk</div><div class="food-gc-desc">Calorie surplus</div></div>
+      </div>${_foodNav(false,true)}`;
+  } else if(_foodStep===2){
+    const alls=_foodP.allergies||[], excls=_foodP.exclusions||[];
+    body=`<div class="food-step-title">Allergies & Exclusions</div><div class="food-step-sub">Anything you can't or don't eat?</div>
+      <div style="font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.28);margin-bottom:6px">Allergies</div>
+      <div class="food-tags">${['Dairy','Gluten','Nuts','Shellfish','Eggs','Soy','Fish'].map(t=>`<div class="food-tag${alls.includes(t)?' fsel':''}" onclick="_ftogTag('a','${t}')">${t}</div>`).join('')}</div>
+      <div style="font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.28);margin-bottom:6px;margin-top:10px">Exclusions</div>
+      <div class="food-tags">${['Meat','Pork','Alcohol','Caffeine','Processed foods'].map(t=>`<div class="food-tag${excls.includes(t)?' fsel':''}" onclick="_ftogTag('e','${t}')">${t}</div>`).join('')}</div>
+      ${_foodNav(true,true)}`;
+  } else if(_foodStep===3){
+    const sel=_foodP.cookingTime||'30min';
+    body=`<div class="food-step-title">Cooking Time</div><div class="food-step-sub">How long do you want to cook?</div>
+      <div class="food-time-cards">
+        ${[['15min','Quick & Easy','Under 15 minutes'],['30min','Standard','About 30 min'],['60min','Detailed','45–60 minutes'],['prep','Meal Prep','Cook once, eat all week']].map(([v,n,d])=>`<div class="food-tc${sel===v?' fsel':''}" onclick="_fselTime('${v}')"><div class="food-tc-name">${n}</div><div class="food-tc-sub">${d}</div></div>`).join('')}
+      </div>${_foodNav(true,true)}`;
+  } else if(_foodStep===4){
+    const sel=_foodP.days||'3';
+    body=`<div class="food-step-title">Duration</div><div class="food-step-sub">How many days should I plan?</div>
+      <div class="food-days-row">${['1','3','7'].map(d=>`<div class="food-daysbtn${sel===d?' fsel':''}" onclick="_fselDays('${d}')">${d} day${d==='1'?'':'s'}</div>`).join('')}</div>
+      ${_foodNav(true,true)}`;
+  } else if(_foodStep===5){
+    const sel=_foodP.ingredientPref||'balanced';
+    body=`<div class="food-step-title">Ingredients</div><div class="food-step-sub">What kind of ingredients do you prefer?</div>
+      <div class="food-ingr-cards">
+        ${[['easy','🏪','Easy to Find','Supermarket staples'],['balanced','🌿','Balanced','Variety of common foods'],['exotic','🍱','Diverse','Wider ingredient range']].map(([v,ico,n,d])=>`<div class="food-ic${sel===v?' fsel':''}" onclick="_fselIngr('${v}')"><div style="font-size:20px;margin-bottom:4px">${ico}</div><div style="font-size:11.5px;font-weight:700;color:var(--text-primary,#FAFAFA)">${n}</div><div style="font-size:9.5px;color:rgba(255,255,255,.32);margin-top:2px">${d}</div></div>`).join('')}
+      </div>
+      <div class="food-navrow"><button class="food-back" onclick="_fnavBack()">‹ Back</button><button class="food-next" id="foodGenBtn" onclick="_generatePlan()">Generate Plan ✨</button></div>`;
+  }
+  inner.innerHTML=`<div class="food-top"><div class="food-modal-title">Meal Planner</div><button class="food-close" onclick="closeFoodModal()">×</button></div><div class="food-dots">${dots}</div>${body}`;
+}
+
+function _foodNav(back,next){
+  return`<div class="food-navrow">${back?'<button class="food-back" onclick="_fnavBack()">‹ Back</button>':'<div></div>'}${next?'<button class="food-next" onclick="_fnavNext()">Next ›</button>':''}</div>`;
+}
+function _fnavNext(){ _foodPrefsSave(_foodP); _foodStep=Math.min(_foodStep+1,5); _renderFoodStep(); }
+function _fnavBack(){ _foodStep=Math.max(_foodStep-1,1); _renderFoodStep(); }
+function _fselGoal(v){ _foodP.goalType=v; _renderFoodStep(); }
+function _fselTime(v){ _foodP.cookingTime=v; _renderFoodStep(); }
+function _fselDays(v){ _foodP.days=v; _renderFoodStep(); }
+function _fselIngr(v){ _foodP.ingredientPref=v; _renderFoodStep(); }
+function _ftogTag(type,tag){
+  const k=type==='a'?'allergies':'exclusions'; const a=_foodP[k]||[]; const i=a.indexOf(tag);
+  if(i===-1)a.push(tag);else a.splice(i,1); _foodP[k]=a; _renderFoodStep();
+}
+
+// ── Meal Plan Generation ──────────────────────────────
+async function _generatePlan(){
+  const btn=document.getElementById('foodGenBtn'); if(btn){btn.textContent='Generating…';btn.disabled=true;}
+  _foodPrefsSave(_foodP);
+  let bmi=null, age=null;
+  try{const hb=JSON.parse(localStorage.getItem('health:bmi:v1'));bmi=hb?.bmi;}catch{}
+  try{const st=JSON.parse(localStorage.getItem('topbar:settings'));age=st?.userAge;}catch{}
+  const days=parseInt(_foodP.days||'3');
+  try{
+    let plan=null;
+    if(window.TopbarAI&&window.TopbarAI.isEnabled()){
+      const allg=(_foodP.allergies||[]).join(', ')||'none', excl=(_foodP.exclusions||[]).join(', ')||'none';
+      const ckMap={'15min':'under 15 minutes','30min':'30 minutes','60min':'45-60 minutes','prep':'meal prep style'};
+      const igMap={easy:'easy supermarket staples',balanced:'balanced variety',exotic:'diverse international foods'};
+      const resp=await window.TopbarAI.generateSummary(`Create a ${days}-day meal plan.
+Goal: ${_foodP.goalType||'balanced'}${bmi?'\nBMI: '+bmi:''}${age?'\nAge: '+age:''}
+Allergies: ${allg}. Excluded: ${excl}.
+Cooking time: ${ckMap[_foodP.cookingTime||'30min']}.
+Ingredients: ${igMap[_foodP.ingredientPref||'balanced']}.
+
+For EACH day, use EXACTLY this format:
+===DAY N===
+BREAKFAST: meal name | calories | protein g | carbs g | fat g | ingredients
+LUNCH: meal name | calories | protein g | carbs g | fat g | ingredients
+DINNER: meal name | calories | protein g | carbs g | fat g | ingredients
+SNACK: meal name | calories | protein g | carbs g | fat g | ingredients
+DAILY_TOTAL: cal | protein g | carbs g | fat g
+You may use SKIP: mealtype | reason to omit a meal if it supports the goal.`);
+      if(resp) plan=_parsePlan(resp,days);
+    }
+    if(!plan||!plan.length) plan=_localPlan(_foodP,days);
+    _foodPlan=plan; try{localStorage.setItem(FOOD_PLAN_K,JSON.stringify(plan));}catch{}
+    _showPlanInModal(plan);
+  }catch{
+    _foodPlan=_localPlan(_foodP,days); _showPlanInModal(_foodPlan);
+  }
+}
+
+function _parsePlan(text,days){
+  const blocks=text.split(/===DAY\s*\d+===/i).filter(b=>b.trim()); const plan=[];
+  blocks.forEach((block,i)=>{
+    if(i>=days)return;
+    const date=_iso(_addDays(new Date(),i)); const meals=[]; const lines=block.split('\n').map(l=>l.trim()).filter(Boolean);
+    let totals=null;
+    lines.forEach(line=>{
+      const m=line.match(/^(BREAKFAST|LUNCH|DINNER|SNACK|SKIP|DAILY_TOTAL):\s*(.+)/i); if(!m)return;
+      const type=m[1].toUpperCase(), rest=m[2];
+      if(type==='DAILY_TOTAL'){ const p=rest.split('|').map(x=>parseInt(x.replace(/\D/g,''))||0); totals={cal:p[0],protein:p[1],carbs:p[2],fat:p[3]}; return; }
+      if(type==='SKIP'){ const p=rest.split('|'); meals.push({type:p[0]?.trim().toLowerCase(),skipped:true,reason:p[1]?.trim()||'Per goal'}); return; }
+      const p=rest.split('|').map(x=>x.trim());
+      meals.push({type:type.toLowerCase(),name:p[0]||'',cal:parseInt(p[1])||0,protein:parseInt(p[2])||0,carbs:parseInt(p[3])||0,fat:parseInt(p[4])||0,ingredients:p[5]||''});
+    });
+    if(!totals&&meals.length) totals=meals.filter(m=>!m.skipped).reduce((a,m)=>({cal:a.cal+m.cal,protein:a.protein+m.protein,carbs:a.carbs+m.carbs,fat:a.fat+m.fat}),{cal:0,protein:0,carbs:0,fat:0});
+    plan.push({date,meals:meals.length?meals:_localPlan(_foodP,1)[0].meals,totals:totals||{cal:0,protein:0,carbs:0,fat:0}});
+  });
+  while(plan.length<days){ const i=plan.length; plan.push({date:_iso(_addDays(new Date(),i)),..._localPlan(_foodP,1)[0]}); }
+  return plan;
+}
+
+function _localPlan(prefs,days){
+  const t={cut:[{type:'breakfast',name:'Greek yogurt + berries',cal:280,protein:22,carbs:26,fat:7,ingredients:'Greek yogurt, mixed berries, flaxseed'},{type:'lunch',name:'Grilled chicken salad',cal:390,protein:38,carbs:14,fat:13,ingredients:'Chicken breast, mixed greens, tomato, olive oil'},{type:'dinner',name:'Baked salmon + broccoli',cal:430,protein:42,carbs:12,fat:18,ingredients:'Salmon fillet, broccoli, lemon, olive oil'},{type:'snack',name:'Apple + almond butter',cal:200,protein:5,carbs:24,fat:9,ingredients:'Apple, almond butter'}],balanced:[{type:'breakfast',name:'Oatmeal + banana + protein powder',cal:390,protein:28,carbs:52,fat:7,ingredients:'Rolled oats, banana, protein powder, almond milk'},{type:'lunch',name:'Turkey wrap + side salad',cal:460,protein:34,carbs:44,fat:14,ingredients:'Turkey, whole wheat wrap, lettuce, tomato, avocado'},{type:'dinner',name:'Pasta with chicken marinara',cal:520,protein:36,carbs:58,fat:12,ingredients:'Pasta, chicken breast, tomato sauce, parmesan'},{type:'snack',name:'Cottage cheese + fruit',cal:180,protein:20,carbs:16,fat:3,ingredients:'Cottage cheese, pineapple'}],bulk:[{type:'breakfast',name:'4-egg scramble + toast + avocado',cal:590,protein:34,carbs:44,fat:28,ingredients:'Eggs, whole wheat toast, avocado, cheese'},{type:'lunch',name:'Rice bowl with chicken + sweet potato',cal:660,protein:44,carbs:78,fat:13,ingredients:'Brown rice, chicken breast, sweet potato, olive oil'},{type:'dinner',name:'Beef stir-fry with jasmine rice',cal:690,protein:46,carbs:72,fat:19,ingredients:'Ground beef, jasmine rice, mixed vegetables, soy sauce'},{type:'snack',name:'PB sandwich + banana + milk',cal:450,protein:18,carbs:56,fat:16,ingredients:'Whole wheat bread, peanut butter, banana, milk'}]};
+  const tpl=t[prefs.goalType||'balanced'];
+  return Array.from({length:days},(_,i)=>({date:_iso(_addDays(new Date(),i)),meals:tpl.map(m=>({...m})),totals:tpl.reduce((a,m)=>({cal:a.cal+m.cal,protein:a.protein+m.protein,carbs:a.carbs+m.carbs,fat:a.fat+m.fat}),{cal:0,protein:0,carbs:0,fat:0})}));
+}
+
+function _showPlanInModal(plan){
+  const inner=document.getElementById('foodInner'); if(!inner)return;
+  const labels=['Today','Tomorrow'];
+  const planHTML=plan.map((day,i)=>{
+    const lbl=labels[i]||MSHT[_fromIso(day.date).getMonth()]+' '+_fromIso(day.date).getDate();
+    const mHTML=day.meals.map(m=>{
+      if(m.skipped)return`<div class="food-mealrow"><div class="food-mtype">${m.type}</div><div style="flex:1"><div class="food-mname" style="color:rgba(255,255,255,.32);font-style:italic">Skipped — ${_esc(m.reason)}</div></div></div>`;
+      return`<div class="food-mealrow"><div class="food-mtype">${m.type}</div><div style="flex:1;min-width:0"><div class="food-mname">${_esc(m.name)}</div><div class="food-mmacros">${m.cal} kcal · ${m.protein}g protein · ${m.carbs}g carbs · ${m.fat}g fat</div>${m.ingredients?`<div class="food-mingr">${_esc(m.ingredients)}</div>`:''}</div><button class="food-mcaladd" onclick="_addMealToCalendar('${day.date}','${_esc(m.name)}','${m.type}')">+ Cal</button></div>`;
+    }).join('');
+    const t=day.totals||{};
+    return`<div class="food-dayblock"><div class="food-daylbl">${lbl}<span class="food-totals-lbl">${t.cal||0} kcal · ${t.protein||0}g P · ${t.carbs||0}g C · ${t.fat||0}g F</span></div>${mHTML}</div>`;
+  }).join('');
+  inner.innerHTML=`<div class="food-top"><div class="food-modal-title">Your Meal Plan ✨</div><button class="food-close" onclick="closeFoodModal()">×</button></div>
+    <div style="display:flex;gap:7px;margin-bottom:14px">
+      <button onclick="openFoodModal()" style="padding:5px 13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:7px;color:rgba(255,255,255,.45);font-size:11px;cursor:pointer;font-family:inherit">Regenerate</button>
+      <button onclick="_exportPlanTxt()" style="padding:5px 13px;background:rgba(107,227,164,.07);border:1px solid rgba(107,227,164,.16);border-radius:7px;color:#6BE3A4;font-size:11px;cursor:pointer;font-family:inherit">⬇ Export</button>
+    </div>
+    <div class="food-plan-wrap">${planHTML}</div>`;
+}
+
+function _addMealToCalendar(date,name,type){
+  const tmap={breakfast:'07:30',lunch:'12:00',dinner:'18:00',snack:'15:00'};
+  const emap={breakfast:'08:15',lunch:'13:00',dinner:'19:00',snack:'15:30'};
+  closeFoodModal();
+  openEventModal(null,{title:name,date,startTime:tmap[type]||'12:00',endTime:emap[type]||'13:00',category:'meal'});
+}
+
+function _exportPlanTxt(){
+  if(!_foodPlan)return;
+  let t='MEAL PLAN\n\n';
+  _foodPlan.forEach(d=>{
+    t+='=== '+d.date+' ===\n';
+    d.meals.forEach(m=>{ if(m.skipped){t+=m.type.toUpperCase()+': Skipped ('+m.reason+')\n';return;} t+=m.type.toUpperCase()+': '+m.name+'\n  '+m.cal+' kcal | '+m.protein+'g P | '+m.carbs+'g C | '+m.fat+'g F\n'+(m.ingredients?'  Ingredients: '+m.ingredients+'\n':''); });
+    const tot=d.totals||{}; t+='TOTAL: '+tot.cal+' kcal | '+tot.protein+'g P | '+tot.carbs+'g C | '+tot.fat+'g F\n\n';
+  });
+  const blob=new Blob([t],{type:'text/plain'}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='meal-plan.txt'; a.click(); URL.revokeObjectURL(url);
+}
+
+// ── Supabase background sync ──────────────────────────
+async function _bgSync(evts){
+  try{
+    const unsync=evts.filter(e=>!e._synced);
+    for(const e of unsync.slice(0,20)){
+      await fetch('/api/events',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({table:'events',row:{client_id:e.id,title:e.title,description:e.description||null,date:e.date,start_time:e.startTime||null,end_time:e.endTime||null,all_day:!!e.allDay,category:e.category||'other',recurrence:e.recurrence||null}})});
+    }
+  }catch{}
+}
+
+async function _fetchRemote(){
+  try{
+    const r=await fetch('/api/events?table=events'); if(!r.ok)return;
+    const{data}=await r.json(); if(!data||!data.length)return;
+    let local=_evtsLoad(); const ids=new Set(local.map(e=>e.id));
+    data.forEach(row=>{ if(!ids.has(row.client_id)) local.push({id:row.client_id,title:row.title,description:row.description||'',date:row.date,startTime:row.start_time||null,endTime:row.end_time||null,allDay:!!row.all_day,category:row.category||'other',recurrence:row.recurrence||null,createdAt:row.created_at,_synced:true}); });
+    try{localStorage.setItem(EVENTS_KEY,JSON.stringify(local));}catch{}
+    renderView();
+  }catch{}
+}
+
+// ── Toast ─────────────────────────────────────────────
+function _toast(msg){
+  let t=document.getElementById('scToast');
+  if(!t){ t=document.createElement('div'); t.id='scToast'; t.style.cssText='position:fixed;bottom:88px;left:50%;transform:translateX(-50%) translateY(8px);background:rgba(107,227,164,.16);border:1px solid rgba(107,227,164,.32);color:#6BE3A4;padding:8px 18px;border-radius:9px;font-size:12px;font-weight:700;z-index:9999;opacity:0;transition:opacity .18s,transform .18s;pointer-events:none;white-space:nowrap;font-family:var(--font-body,inherit)'; document.body.appendChild(t); }
+  t.textContent=msg; t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)';
+  clearTimeout(t._to); t._to=setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(8px)'; },2200);
+}
+
+// ── Init ──────────────────────────────────────────────
+document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&document.activeElement?.id==='scAiInput') submitAIEvent(); });
+
+(function init(){
+  setView('month');
+  _loadSuggestions();
+  _fetchRemote();
+  // Restore saved food plan
+  try{ const p=JSON.parse(localStorage.getItem(FOOD_PLAN_K)); if(p) _foodPlan=p; }catch{}
+  // Refresh current time indicator every minute
+  setInterval(()=>{ if(_view==='day'||_view==='week') renderView(); },60000);
+  // Open to today in day view if hash
+  if(location.hash==='#today'){ _viewDate=new Date(); setView('day'); }
+})();
+</script>
+</body>
+</html>
